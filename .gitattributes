@@ -1,0 +1,5 @@
+*.bat text eol=crlf
+*.txt text eol=crlf
+*.html text eol=lf
+*.md text eol=lf
+app/technique-colours.html linguist-generated=true

@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Technique Colours</title>
+<style>
+@font-face { font-family:'TC Pointy'; src:url(data:font/woff2;base64,/*FONT*/) format('woff2'); font-weight:400; }
+:root { --bg:#0f1524; --panel:#182033; --panel2:#1f2940; --line:#2c3854; --text:#e8edf7; --dim:#93a0bb; --acc:#ffb800; --blue:#3fa2ff; --ok:#3ccf7a; --err:#ff6b6b; }
+* { box-sizing:border-box; } [hidden] { display:none !important; }
+body { margin:0; background:var(--bg); color:var(--text); font:14px/1.45 "Segoe UI", system-ui, sans-serif; }
+header { padding:14px 22px; border-bottom:1px solid var(--line); display:flex; gap:14px; align-items:baseline; }
+header select { width:auto; margin-left:auto; padding:5px 8px; }
+header b { font-size:20px; } header span { color:var(--dim); }
+main { display:grid; grid-template-columns:340px 1fr; gap:16px; padding:16px 22px; height:calc(100vh - 58px); }
+.panel { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px; min-height:0; }
+aside { display:flex; flex-direction:column; gap:10px; }
+input[type=search], select { width:100%; background:#0b1120; color:var(--text); border:1px solid var(--line); border-radius:8px; padding:8px 10px; font:inherit; }
+#list { flex:1; overflow:auto; display:flex; flex-direction:column; gap:4px; }
+.row { padding:7px 10px; border-radius:8px; background:var(--panel2); cursor:pointer; border:1px solid transparent; display:flex; justify-content:space-between; gap:8px; }
+.row:hover { border-color:var(--line); } .row.on { border-color:var(--acc); }
+.row small { color:var(--dim); white-space:nowrap; }
+.dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; vertical-align:middle; }
+button { font:inherit; border-radius:8px; border:1px solid var(--line); background:var(--panel2); color:var(--text); padding:8px 14px; cursor:pointer; }
+button.primary { background:var(--acc); color:#1a1300; border-color:var(--acc); font-weight:700; }
+button.danger { color:var(--err); }
+button:disabled { opacity:.5; cursor:default; }
+section { display:flex; flex-direction:column; gap:14px; overflow:auto; }
+.grid { display:grid; grid-template-columns:auto 1fr auto; gap:10px 14px; align-items:center; max-width:640px; }
+.grid label { color:var(--dim); }
+input[type=range] { width:100%; }
+input[type=color] { width:64px; height:40px; border:none; background:none; padding:0; }
+canvas { border-radius:10px; border:1px solid var(--line); max-width:100%; }
+.status { padding:8px 12px; border-radius:8px; background:var(--panel2); }
+.status.ok { color:var(--ok); } .status.err { color:var(--err); }
+.hint { color:var(--dim); font-size:13px; max-width:760px; }
+#changes .row { cursor:default; align-items:center; }
+h3 { margin:0 0 4px; font-size:15px; }
+.empty { color:var(--dim); text-align:center; margin:auto; }
+</style>
+</head>
+<body>
+<header><b>Technique Colours</b><span id="sub"></span><select id="lang"><option value="en">English</option><option value="pt">Português</option><option value="es">Español</option></select></header>
+<main>
+  <aside class="panel">
+    <button id="pick" class="primary"></button>
+    <div id="where" class="hint"></div>
+    <input id="search" type="search">
+    <select id="cat"></select>
+    <div id="list"></div>
+  </aside>
+  <section class="panel">
+    <div id="editor"></div>
+    <div>
+      <h3 id="yours"></h3>
+      <div id="changes" style="display:flex;flex-direction:column;gap:4px"></div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <button id="write" class="primary" disabled></button>
+      <span class="hint" id="writehint"></span>
+    </div>
+    <div id="status" class="status" hidden></div>
+    <p class="hint" id="about"></p>
+  </section>
+</main>
+<script>
+// ---------- the interface's languages: English, with Portuguese and Spanish (the key is the English text)
+const PT = {
+  'New special moves in other colours, sold in Inazuma Fantasy\'s Technique Shop (needs VRFW)': 'Técnicas novas com outras cores, à venda na loja de técnicas do Inazuma Fantasy (precisa do VRFW)',
+  'Choose the game\'s mods folder…': 'Escolher a pasta mods do jogo…',
+  'Search the original move…': 'Procurar a técnica original…',
+  'All': 'Todas', 'Shots': 'Remates', 'Dribbles': 'Dribles', 'Blocks': 'Bloqueios', 'Saves (goalkeeper)': 'Defesas (guarda-redes)',
+  'Shot': 'Remate', 'Dribble': 'Drible', 'Block': 'Bloqueio', 'Save': 'Defesa',
+  'Fire': 'Fogo', 'Forest': 'Floresta', 'Wind': 'Vento', 'Mountain': 'Montanha', 'Void': 'Vazio',
+  'Choose on the left the original move you want in another colour.': 'Escolhe à esquerda a técnica original que queres noutra cor.',
+  'Your moves': 'As tuas técnicas', 'Generate the mod': 'Gerar o mod',
+  'Writes <b>mods\\TechniqueColours</b>. Close the game first; then switch the mod on in the launcher.': 'Escreve <b>mods\\TechniqueColours</b>. Fecha o jogo antes; depois liga o mod no launcher.',
+  'Each move is a copy of the original (same power, TP and animation) with its effect in another colour and a name of your own; the original stays as it is. They are sold in Inazuma Fantasy\'s Technique Shop. The preview is an approximation: the real result is only seen in the game.': 'Cada técnica é uma cópia da original (a mesma força, TP e animação) com o efeito noutra cor e um nome teu; a original fica como está. Ficam à venda na loja de técnicas do Inazuma Fantasy. A pré-visualização é uma aproximação: o resultado real só se vê no jogo.',
+  'Name in the game': 'Nome no jogo', 'Price (tokens)': 'Preço (fichas)', 'Element': 'Elemento', 'The original\'s ({el})': 'O da original ({el})',
+  'Colour': 'Cor', 'Saturation ×': 'Saturação ×', 'Brightness ×': 'Brilho ×', 'Tint whites': 'Tingir brancos', 'Keep whites': 'Manter brancos',
+  'The name in the cut-in (one picture for every language):': 'O nome na animação (uma imagem para todas as línguas):',
+  'This move was made with an earlier version of the app and shows the original\'s name in the cut-in.': 'Esta técnica foi criada numa versão anterior da app e mostra o nome da original na animação.',
+  'Use its own name': 'Usar o nome próprio',
+  '(the game sees it as another move: whoever bought it has to buy it again)': '(passa a ser outra técnica para o jogo: quem já a tiver comprado tem de a comprar outra vez)',
+  'Preview on a sample flame (approximate):': 'Pré-visualização numa chama de exemplo (aproximada):',
+  'Save': 'Guardar', 'Create move': 'Criar técnica', 'Delete': 'Apagar',
+  'New version of {name}': 'Nova versão de {name}',
+  '{cat} · based on {name} ({en}, {k}) · same power and TP': '{cat} · baseada em {name} ({en}, {k}) · a mesma força e TP',
+  'Give the move a name.': 'Dá um nome à técnica.',
+  'Saved. Click «Generate the mod» for the game to see the changes.': 'Guardado. Carrega em «Gerar o mod» para o jogo ver as mudanças.',
+  '«{name}» created. Click «Generate the mod» when you are done.': '«{name}» criada. Carrega em «Gerar o mod» quando acabares.',
+  'Give it its own name in the cut-in? The game sees it as another move: if you bought it, take it off your players first and buy it again afterwards.': 'Dar-lhe o nome próprio na animação? Para o jogo passa a ser outra técnica: se já a compraste, tira-a aos jogadores antes e volta a comprá-la depois.',
+  'Done. Click «Generate the mod».': 'Feito. Carrega em «Gerar o mod».',
+  'Delete «{name}»? If a player has learned it, take it off them in the game first.': 'Apagar «{name}»? Se algum jogador a tiver aprendido, tira-lha primeiro no jogo.',
+  'Deleted. Choose another move on the left.': 'Apagada. Escolhe outra técnica à esquerda.',
+  'None yet.': 'Ainda nenhuma.', '{price} tokens · {el} · from {en}': '{price} fichas · {el} · de {en}', 'Folder: {name}': 'Pasta: {name}',
+  'This folder has no VRFW: check it is the mods folder of the game you start with the mod launcher.': 'Esta pasta não tem o VRFW: confirma que é a pasta mods do jogo que abres com o launcher de mods.',
+  'Folder connected, but it has no Inazuma Fantasy: the moves are made, but without its shop there is nowhere to buy them.': 'Pasta ligada, mas não tem o Inazuma Fantasy: as técnicas são criadas, mas sem a loja não há onde as comprar.',
+  'Mods folder connected.': 'Pasta mods ligada.',
+  'Mod generated in mods\\{mod} with {n} move(s). Switch «Technique Colours» on in the launcher; they are sold in Inazuma Fantasy\'s Technique Shop.': 'Mod gerado em mods\\{mod} com {n} técnica(s). Liga «Technique Colours» no launcher; ficam à venda na loja de técnicas do Inazuma Fantasy.',
+  'Could not write: ': 'Não foi possível escrever: ',
+};
+const ES = {
+  'New special moves in other colours, sold in Inazuma Fantasy\'s Technique Shop (needs VRFW)': 'Técnicas nuevas con otros colores, a la venta en la tienda de técnicas de Inazuma Fantasy (necesita VRFW)',
+  'Choose the game\'s mods folder…': 'Elegir la carpeta mods del juego…',
+  'Search the original move…': 'Buscar la técnica original…',
+  'All': 'Todas', 'Shots': 'Remates', 'Dribbles': 'Regates', 'Blocks': 'Bloqueos', 'Saves (goalkeeper)': 'Paradas (portero)',
+  'Shot': 'Remate', 'Dribble': 'Regate', 'Block': 'Bloqueo', 'Save': 'Parada',
+  'Fire': 'Fuego', 'Forest': 'Bosque', 'Wind': 'Viento', 'Mountain': 'Montaña', 'Void': 'Vacío',
+  'Choose on the left the original move you want in another colour.': 'Elige a la izquierda la técnica original que quieres en otro color.',
+  'Your moves': 'Tus técnicas', 'Generate the mod': 'Generar el mod',
+  'Writes <b>mods\\TechniqueColours</b>. Close the game first; then switch the mod on in the launcher.': 'Escribe <b>mods\\TechniqueColours</b>. Cierra el juego antes; después activa el mod en el launcher.',
+  'Each move is a copy of the original (same power, TP and animation) with its effect in another colour and a name of your own; the original stays as it is. They are sold in Inazuma Fantasy\'s Technique Shop. The preview is an approximation: the real result is only seen in the game.': 'Cada técnica es una copia de la original (la misma potencia, TP y animación) con el efecto en otro color y un nombre tuyo; la original queda como está. Se venden en la tienda de técnicas de Inazuma Fantasy. La vista previa es una aproximación: el resultado real solo se ve en el juego.',
+  'Name in the game': 'Nombre en el juego', 'Price (tokens)': 'Precio (fichas)', 'Element': 'Elemento', 'The original\'s ({el})': 'El de la original ({el})',
+  'Colour': 'Color', 'Saturation ×': 'Saturación ×', 'Brightness ×': 'Brillo ×', 'Tint whites': 'Teñir blancos', 'Keep whites': 'Mantener blancos',
+  'The name in the cut-in (one picture for every language):': 'El nombre en la animación (una imagen para todos los idiomas):',
+  'This move was made with an earlier version of the app and shows the original\'s name in the cut-in.': 'Esta técnica se creó con una versión anterior de la aplicación y muestra el nombre de la original en la animación.',
+  'Use its own name': 'Usar su propio nombre',
+  '(the game sees it as another move: whoever bought it has to buy it again)': '(el juego la ve como otra técnica: quien ya la haya comprado tiene que comprarla de nuevo)',
+  'Preview on a sample flame (approximate):': 'Vista previa en una llama de ejemplo (aproximada):',
+  'Save': 'Guardar', 'Create move': 'Crear técnica', 'Delete': 'Borrar',
+  'New version of {name}': 'Nueva versión de {name}',
+  '{cat} · based on {name} ({en}, {k}) · same power and TP': '{cat} · basada en {name} ({en}, {k}) · la misma potencia y TP',
+  'Give the move a name.': 'Ponle un nombre a la técnica.',
+  'Saved. Click «Generate the mod» for the game to see the changes.': 'Guardado. Pulsa «Generar el mod» para que el juego vea los cambios.',
+  '«{name}» created. Click «Generate the mod» when you are done.': '«{name}» creada. Pulsa «Generar el mod» cuando termines.',
+  'Give it its own name in the cut-in? The game sees it as another move: if you bought it, take it off your players first and buy it again afterwards.': '¿Darle su propio nombre en la animación? El juego la ve como otra técnica: si ya la compraste, quítasela antes a tus jugadores y vuelve a comprarla después.',
+  'Done. Click «Generate the mod».': 'Hecho. Pulsa «Generar el mod».',
+  'Delete «{name}»? If a player has learned it, take it off them in the game first.': '¿Borrar «{name}»? Si algún jugador la ha aprendido, quítasela antes en el juego.',
+  'Deleted. Choose another move on the left.': 'Borrada. Elige otra técnica a la izquierda.',
+  'None yet.': 'Ninguna todavía.', '{price} tokens · {el} · from {en}': '{price} fichas · {el} · de {en}', 'Folder: {name}': 'Carpeta: {name}',
+  'This folder has no VRFW: check it is the mods folder of the game you start with the mod launcher.': 'Esta carpeta no tiene VRFW: comprueba que es la carpeta mods del juego que abres con el launcher de mods.',
+  'Folder connected, but it has no Inazuma Fantasy: the moves are made, but without its shop there is nowhere to buy them.': 'Carpeta conectada, pero no tiene Inazuma Fantasy: las técnicas se crean, pero sin su tienda no hay dónde comprarlas.',
+  'Mods folder connected.': 'Carpeta mods conectada.',
+  'Mod generated in mods\\{mod} with {n} move(s). Switch «Technique Colours» on in the launcher; they are sold in Inazuma Fantasy\'s Technique Shop.': 'Mod generado en mods\\{mod} con {n} técnica(s). Activa «Technique Colours» en el launcher; se venden en la tienda de técnicas de Inazuma Fantasy.',
+  'Could not write: ': 'No se pudo escribir: ',
+};
+let LANG = 'en'; try { LANG = localStorage.getItem('techcolours-lang') || ((navigator.language || '').startsWith('pt') ? 'pt' : (navigator.language || '').startsWith('es') ? 'es' : 'en'); } catch (e) { /* default */ }
+const T = (s, p = {}) => ((LANG === 'pt' ? PT[s] : LANG === 'es' ? ES[s] : null) || s).replace(/\{(\w+)\}/g, (m, k) => k in p ? p[k] : m);
+
+const TECHS = /*TECHS*/[];
+const MOD = 'TechniqueColours', TAG = '# TECHCOLOURS ';
+const LANGS = ['ja', 'en', 'es', 'fr', 'de', 'it', 'pt', 'zh_hans', 'zh_hant'];
+const EL = { fire:'#ff6a3d', forest:'#45c46a', wind:'#3fb8ff', mountain:'#c79a4a', void:'#9b6bff' };
+const ELN = el => T({ fire: 'Fire', forest: 'Forest', wind: 'Wind', mountain: 'Mountain', void: 'Void' }[el] || el || '');
+const CATN = c => T({ shoot: 'Shot', dribble: 'Dribble', block: 'Block', catch: 'Save' }[c] || c);
+const $ = s => document.querySelector(s);
+// state: kept in the mod. `n` never comes back (a save remembers a bought move by its name); the cut-in ids are the mod's own block
+const newUid = () => 'abcdefghijkmnpqrstuvwxyz'[Math.floor(Math.random() * 24)] + Math.random().toString(36).slice(2, 5).padEnd(3, '0');
+let root = null, state = { next: 0, uid: newUid(), block: Math.floor(Math.random() * 40), techs: [] }, cur = null;   // cur = { base, edit (a tech of state) or null }
+// a move's internal name: what a save remembers as bought, so it never comes back (the mod's random id in it: a mod folder
+// deleted and made again starts other names)
+const techName = t => t.id || `tc_${t.n}`;
+
+function status(t, kind) { const s = $('#status'); s.hidden = false; s.textContent = t; s.className = 'status ' + (kind || ''); }
+const nameOf = t => (LANG === 'pt' ? t.pt : LANG === 'es' ? t.es : t.en) || t.en;
+const baseOf = k => TECHS.find(t => t.k === k);
+
+function applyLang() {
+  document.documentElement.lang = LANG; $('#lang').value = LANG;
+  $('#sub').textContent = T('New special moves in other colours, sold in Inazuma Fantasy\'s Technique Shop (needs VRFW)');
+  $('#pick').textContent = T('Choose the game\'s mods folder…');
+  $('#search').placeholder = T('Search the original move…');
+  const c = $('#cat').value; $('#cat').innerHTML = [['', 'All'], ['shoot', 'Shots'], ['dribble', 'Dribbles'], ['block', 'Blocks'], ['catch', 'Saves (goalkeeper)']].map(([v, l]) => `<option value="${v}">${T(l)}</option>`).join(''); $('#cat').value = c;
+  if (root) $('#where').textContent = T('Folder: {name}', { name: root.name });
+  $('#yours').textContent = T('Your moves'); $('#write').textContent = T('Generate the mod');
+  $('#writehint').innerHTML = T('Writes <b>mods\\TechniqueColours</b>. Close the game first; then switch the mod on in the launcher.');
+  $('#about').textContent = T('Each move is a copy of the original (same power, TP and animation) with its effect in another colour and a name of your own; the original stays as it is. They are sold in Inazuma Fantasy\'s Technique Shop. The preview is an approximation: the real result is only seen in the game.');
+  if (cur) open(cur.base, cur.edit); else $('#editor').innerHTML = `<div class="empty">${T('Choose on the left the original move you want in another colour.')}</div>`;
+  renderList(); renderChanges();
+}
+$('#lang').addEventListener('change', () => { LANG = $('#lang').value; try { localStorage.setItem('techcolours-lang', LANG); } catch (e) { /* not kept */ } applyLang(); });
+
+function renderList() {
+  const q = $('#search').value.trim().toLowerCase(), c = $('#cat').value, list = $('#list'); list.textContent = '';
+  const hit = TECHS.filter(t => (!c || t.cat === c) && (!q || [t.pt, t.en, t.es, t.k].some(x => x && x.toLowerCase().includes(q)))).slice(0, 300);
+  for (const t of hit) {
+    const r = document.createElement('div'); r.className = 'row' + (cur && !cur.edit && cur.base.k === t.k ? ' on' : '');
+    r.innerHTML = `<span><i class="dot" style="background:${EL[t.el] || '#888'}"></i></span>`;
+    r.firstChild.append(nameOf(t));
+    const sm = document.createElement('small'); sm.textContent = (t.en !== nameOf(t) ? t.en + ' · ' : '') + t.k; r.append(sm);
+    r.onclick = () => open(t, null); list.append(r);
+  }
+}
+
+// ---------- colours
+const hexToHsv = h => { const n = parseInt(h.slice(1), 16); return rgbToHsv((n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255); };
+const rgbToHsv = (r, g, b) => { const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+  let hue = 0; if (d) hue = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; hue = (hue * 60 + 360) % 360;
+  return [hue, mx ? d / mx : 0, mx]; };
+const hsvToRgb = (h, s, v) => { const f = n => { const k = (n + h / 60) % 6; return v - v * s * Math.max(0, Math.min(k, 4 - k, 1)); }; return [f(5), f(3), f(1)]; };
+// the colour word of a new move's suggested name, by hue
+const COLOUR_WORDS = {
+  en: ['Red', 'Orange', 'Gold', 'Yellow', 'Lime', 'Green', 'Turquoise', 'Sky Blue', 'Blue', 'Indigo', 'Purple', 'Magenta', 'Pink', 'Black', 'White', 'Grey'],
+  pt: ['Vermelho', 'Laranja', 'Dourado', 'Amarelo', 'Verde-lima', 'Verde', 'Turquesa', 'Azul-céu', 'Azul', 'Índigo', 'Roxo', 'Magenta', 'Rosa', 'Negro', 'Branco', 'Cinzento'],
+  es: ['Rojo', 'Naranja', 'Dorado', 'Amarillo', 'Lima', 'Verde', 'Turquesa', 'Celeste', 'Azul', 'Índigo', 'Morado', 'Magenta', 'Rosa', 'Negro', 'Blanco', 'Gris'] };
+const HUES = [0, 25, 50, 70, 100, 140, 175, 200, 225, 255, 280, 310, 335, 360];
+const colourName = hex => { const w = COLOUR_WORDS[LANG] || COLOUR_WORDS.en, [h, s, v] = hexToHsv(hex); if (v < 0.2) return w[13]; if (s < 0.15) return v > 0.8 ? w[14] : w[15];
+  const i = HUES.reduce((a, b, j) => Math.abs(b - h) < Math.abs(HUES[a] - h) ? j : a, 0); return w[i === 13 ? 0 : i]; };
+
+function open(base, edit) {
+  cur = { base, edit };
+  const p = edit ? { ...edit } : { name: '', price: 10, element: '', color: '#3fa2ff', sat: 1, val: 1, colorize: 0.3, keepWhites: true };
+  const ed = $('#editor'), field = 'background:#0b1120;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit';
+  ed.innerHTML = `<h3></h3><p class="hint" id="meta"></p>
+    <div class="grid">
+      <label>${T('Name in the game')}</label><input id="tname" maxlength="40" style="${field}"><span></span>
+      <label>${T('Price (tokens)')}</label><input id="tprice" type="number" min="0" max="9999" value="${p.price}" style="width:110px;${field}"><span></span>
+      <label>${T('Element')}</label><select id="tel" style="width:auto">${['', 'fire', 'forest', 'wind', 'mountain', 'void'].map(e => `<option value="${e}" ${(p.element || '') === e ? 'selected' : ''}>${e ? ELN(e) : T('The original\'s ({el})', { el: ELN(base.el) })}</option>`).join('')}</select><span></span>
+      <label>${T('Colour')}</label><input type="color" id="col" value="${p.color}"><span></span>
+      <label>${T('Saturation ×')}</label><input type="range" id="sat" min="0" max="2" step="0.01" value="${p.sat}"><span id="satv"></span>
+      <label>${T('Brightness ×')}</label><input type="range" id="val" min="0" max="2" step="0.01" value="${p.val}"><span id="valv"></span>
+      <label>${T('Tint whites')}</label><input type="range" id="colz" min="0" max="1" step="0.01" value="${p.colorize}"><span id="colzv"></span>
+      <label>${T('Keep whites')}</label><input type="checkbox" id="kw" ${p.keepWhites ? 'checked' : ''} style="justify-self:start"><span></span>
+    </div>
+    <div class="hint">${T('The name in the cut-in (one picture for every language):')}</div>
+    ${edit && !edit.key ? `<div class="status err" style="max-width:760px">${T('This move was made with an earlier version of the app and shows the original\'s name in the cut-in.')} <button id="givekey">${T('Use its own name')}</button> ${T('(the game sees it as another move: whoever bought it has to buy it again)')}</div>` : ''}
+    <canvas id="telop" width="864" height="176" style="background:#1d2234"></canvas>
+    <div class="hint">${T('Preview on a sample flame (approximate):')}</div>
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><canvas id="before" width="360" height="200"></canvas><span style="color:var(--dim)">→</span><canvas id="after" width="360" height="200"></canvas></div>
+    <div style="display:flex;gap:10px"><button id="apply" class="primary">${edit ? T('Save') : T('Create move')}</button>${edit ? `<button id="drop" class="danger">${T('Delete')}</button>` : ''}</div>`;
+  ed.querySelector('h3').textContent = edit ? edit.name : T('New version of {name}', { name: nameOf(base) });
+  $('#meta').textContent = T('{cat} · based on {name} ({en}, {k}) · same power and TP', { cat: CATN(base.cat), name: nameOf(base), en: base.en, k: base.k });
+  const autoName = () => LANG === 'en' ? `${colourName($('#col').value)} ${nameOf(base)}` : `${nameOf(base)} ${colourName($('#col').value)}`;
+  let named = !!edit;
+  $('#tname').value = edit ? edit.name : autoName();
+  $('#tname').addEventListener('input', () => { named = true; });
+  $('#col').addEventListener('input', () => { if (!named) $('#tname').value = autoName(); });
+  for (const id of ['col', 'sat', 'val', 'colz', 'kw']) $('#' + id).addEventListener('input', preview);
+  $('#apply').onclick = () => {
+    const name = $('#tname').value.trim(); if (!name) { status(T('Give the move a name.'), 'err'); return; }
+    const v = { name, price: Math.max(0, Math.min(9999, Math.round(+$('#tprice').value || 0))), element: $('#tel').value, color: $('#col').value, sat: +$('#sat').value, val: +$('#val').value, colorize: +$('#colz').value, keepWhites: $('#kw').checked };
+    if (edit) Object.assign(edit, v);
+    else { state.next++; state.techs.push({ n: state.next, id: `tc_${state.uid}_${state.next}`, key: base.k.slice(0, 3) + String(60000 + state.block * 500 + state.next % 500), k: base.k, en: base.en, obj: base.obj, ev: base.ev, fail: base.fail || null, ...v }); }
+    renderChanges(); open(base, edit || state.techs.at(-1)); $('#write').disabled = !root;
+    status(edit ? T('Saved. Click «Generate the mod» for the game to see the changes.') : T('«{name}» created. Click «Generate the mod» when you are done.', { name }), 'ok');
+  };
+  if (edit && !edit.key) $('#givekey').onclick = () => {
+    if (!confirm(T('Give it its own name in the cut-in? The game sees it as another move: if you bought it, take it off your players first and buy it again afterwards.'))) return;
+    state.next++; edit.id = `tc_${state.uid}_${state.next}`; edit.key = base.k.slice(0, 3) + String(60000 + state.block * 500 + state.next % 500);
+    open(base, edit); status(T('Done. Click «Generate the mod».'), 'ok');
+  };
+  if (edit) $('#drop').onclick = () => {
+    if (!confirm(T('Delete «{name}»? If a player has learned it, take it off them in the game first.', { name: edit.name }))) return;
+    state.techs = state.techs.filter(x => x !== edit); cur = null; $('#editor').innerHTML = `<div class="empty">${T('Deleted. Choose another move on the left.')}</div>`; renderChanges();
+  };
+  const telop = () => drawTelopK($('#telop'), $('#tname').value.trim() || ' ', $('#tel').value || base.el);
+  for (const id of ['tname', 'tel']) $('#' + id).addEventListener('input', telop);
+  $('#col').addEventListener('input', telop); document.fonts.load(`400 250px 'TC Pointy'`).then(telop);
+  preview(); renderList(); renderChanges(); telop();
+}
+
+// ---------- the name banner (telop): the name in the cut-in, one picture for every language
+// The game's telop is a 1728x352 picture; VRFW takes a PNG of the mod for a move with a `key`.
+const TELOP_W = 1728, TELOP_H = 352;
+// colours by element: gradient top/mid/bottom, outline, the 3D edge behind
+const TELOP_STYLE = {
+  fire:     { g: ['#8c2301', '#fc7606'], line: '#ffd88a', edge: '#3a0c04' },
+  mountain: { g: ['#9b4500', '#e7a403'], line: '#ffeeb0', edge: '#2e1806' },
+  wind:     { g: ['#0247c0', '#04ccfe'], line: '#bff7ff', edge: '#04123a' },
+  forest:   { g: ['#4ba202', '#bff723'], line: '#f4ffc4', edge: '#0b2806' },
+  void:     { g: ['#3f0161', '#bb44ee'], line: '#f8eeff', edge: '#16042c' },
+};
+function drawTelop(c, text, element, family, weight = '400', squash = 0.9) {
+  const st = TELOP_STYLE[element] || TELOP_STYLE.fire;
+  const g = c.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, c.width, c.height);
+  const k = c.width / TELOP_W;
+  // the letters alone (gradient + streaks), on their own canvas
+  const L = document.createElement('canvas'); L.width = TELOP_W; L.height = TELOP_H; const l = L.getContext('2d');
+  let size = 250; const font = () => `${weight} ${size}px ${family}`;
+  l.font = font(); while (l.measureText(text).width * squash > 1480 && size > 60) { size -= 5; l.font = font(); }
+  const m = l.measureText(text), w = m.width, x = (TELOP_W - w) / 2, y = TELOP_H / 2 + (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2;
+  const SX = squash, SK = -0.12;
+  const slant = t => t.setTransform(SX, 0, SK, 1, (TELOP_W - TELOP_W * SX) / 2 - SK * y, 0);
+  slant(l); l.font = font(); l.textBaseline = 'alphabetic';
+  const top = y - m.actualBoundingBoxAscent, bot = y + m.actualBoundingBoxDescent;
+  const gr = l.createLinearGradient(0, top, 0, bot); gr.addColorStop(0, st.g[0]); gr.addColorStop(1, st.g[1]);   // dark at the top, light at the bottom (the game's)
+  l.fillStyle = gr; l.fillText(text, x, y);
+  // a light brushed texture inside the letters: thin streaks, lighter and darker
+  l.globalCompositeOperation = 'source-atop'; l.setTransform(1, 0, 0, 1, 0, 0);
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < 70; i++) {
+    const sx = x - 100 + rnd() * (w + 200), sy = top + rnd() * (bot - top), len = 40 + rnd() * 160;
+    l.strokeStyle = rnd() < 0.5 ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.16)'; l.lineWidth = 2 + rnd() * 5;
+    l.beginPath(); l.moveTo(sx, sy); l.lineTo(sx + len, sy - len * 0.35); l.stroke();
+  }
+  // the banner: soft dark glow, the 3D edge, the outline, the letters
+  g.scale(k, k); g.lineJoin = 'round'; g.miterLimit = 2;
+  const lw = size * 0.07, depth = Math.max(4, size * 0.07);
+  g.save(); g.setTransform(SX * k, 0, SK * k, k, ((TELOP_W - TELOP_W * SX) / 2 - SK * y) * k, 0); g.font = font();
+  g.shadowColor = 'rgba(0,0,0,0.55)'; g.shadowBlur = 22 * k; g.shadowOffsetX = 6 * k; g.shadowOffsetY = 8 * k;
+  g.fillStyle = st.edge; g.strokeStyle = st.edge; g.lineWidth = lw;
+  g.strokeText(text, x + depth * 0.8, y + depth); g.fillText(text, x + depth * 0.8, y + depth);
+  g.shadowColor = 'transparent';
+  for (let i = 1; i < depth; i++) { g.strokeText(text, x + i * 0.8, y + i); }
+  g.strokeStyle = st.line; g.lineWidth = lw; g.strokeText(text, x, y);
+  g.restore();
+  g.setTransform(1, 0, 0, 1, 0, 0); g.drawImage(L, 0, 0, c.width, c.height);
+}
+
+// the letters: Rum Raisin (SIL Open Font License 1.1, in this page), close to the game's banners; Japanese / Chinese letters
+// fall back to the system's
+const TELOP_FONT = "'TC Pointy', 'Yu Gothic UI', 'Meiryo', sans-serif";
+const drawTelopK = (c, text, element) => drawTelop(c, text, element, TELOP_FONT, '400', 1);
+const telopBlob = async (text, element) => { await document.fonts.load(`400 250px ${TELOP_FONT}`, text); await document.fonts.ready; const c = document.createElement('canvas'); c.width = TELOP_W; c.height = TELOP_H; drawTelop(c, text, element, TELOP_FONT, '400', 1); return new Promise(r => c.toBlob(r, 'image/png')); };
+
+// a flame-like sample
+function sample(c) {
+  const g = c.getContext('2d'), w = c.width, h = c.height;
+  const img = g.createImageData(w, h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const t = Math.max(0, Math.min(1, 1 - y / h + 0.25 * Math.sin(x / 13) * Math.sin(y / 9) + 0.15 * Math.sin(x / 31))), i = (y * w + x) * 4;
+    const stops = [[0, [40, 6, 2]], [0.35, [200, 40, 10]], [0.6, [255, 130, 20]], [0.82, [255, 220, 90]], [1, [255, 252, 235]]];
+    let a = stops[0], b = stops[stops.length - 1]; for (let s = 1; s < stops.length; s++) if (t <= stops[s][0]) { a = stops[s - 1]; b = stops[s]; break; }
+    const f = (t - a[0]) / (b[0] - a[0] || 1); for (let k = 0; k < 3; k++) img.data[i + k] = a[1][k] + (b[1][k] - a[1][k]) * f; img.data[i + 3] = 255;
+  }
+  g.putImageData(img, 0, 0);
+}
+// an approximation of VRFW's set mode: hue set, saturation ×, value ×, greys raised to «colorize» saturation, whites kept
+function preview() {
+  const v = { color: $('#col').value, sat: +$('#sat').value, val: +$('#val').value, colorize: +$('#colz').value, kw: $('#kw').checked };
+  $('#satv').textContent = v.sat.toFixed(2); $('#valv').textContent = v.val.toFixed(2); $('#colzv').textContent = v.colorize.toFixed(2);
+  const b = $('#before'), a = $('#after'); sample(b); sample(a);
+  const g = a.getContext('2d'), img = g.getImageData(0, 0, a.width, a.height), d = img.data, H = hexToHsv(v.color)[0];
+  for (let i = 0; i < d.length; i += 4) {
+    const r = d[i] / 255, gg = d[i + 1] / 255, bb = d[i + 2] / 255;
+    if (v.kw && Math.min(r, gg, bb) >= 0.92) continue;
+    const [, s, val] = rgbToHsv(r, gg, bb), rgb = hsvToRgb(H, Math.min(1, Math.max(s * v.sat, v.colorize)), Math.min(1, val * v.val));
+    for (let k = 0; k < 3; k++) d[i + k] = Math.round(rgb[k] * 255);
+  }
+  g.putImageData(img, 0, 0);
+}
+function renderChanges() {
+  const box = $('#changes'); box.textContent = '';
+  if (!state.techs.length) { box.innerHTML = `<span class="hint">${T('None yet.')}</span>`; return; }
+  for (const c of state.techs) {
+    const r = document.createElement('div'); r.className = 'row' + (cur && cur.edit === c ? ' on' : ''); r.style.cursor = 'pointer';
+    r.innerHTML = `<span><i class="dot" style="background:${c.color}"></i></span><small></small>`;
+    r.firstChild.append(c.name); r.lastChild.textContent = T('{price} tokens · {el} · from {en}', { price: c.price, el: ELN(c.element || (baseOf(c.k) || {}).el), en: c.en });
+    r.onclick = () => { const t = baseOf(c.k); if (t) open(t, c); };
+    box.append(r);
+  }
+}
+// ---------- files
+async function dirAt(parts, create) { let d = root; for (const p of parts) d = await d.getDirectoryHandle(p, { create }); return d; }
+async function writeAt(path, text) { const parts = path.split('/'), d = await dirAt(parts.slice(0, -1), true), f = await d.getFileHandle(parts.at(-1), { create: true }), w = await f.createWritable(); await w.write(text); await w.close(); }
+const tstr = s => JSON.stringify(String(s));
+async function load() {
+  try {
+    const f = await (await dirAt([MOD])).getFileHandle('mod.toml');
+    const line = (await (await f.getFile()).text()).split('\n').find(l => l.startsWith(TAG));
+    if (line) state = JSON.parse(line.slice(TAG.length));
+  } catch (e) { /* first use */ }
+  state.techs = state.techs || []; state.next = Math.max(state.next || 0, ...state.techs.map(t => t.n));
+  if (!state.uid) state.uid = newUid();
+  if (state.block == null) state.block = Math.floor(Math.random() * 40);
+}
+$('#pick').onclick = async () => {
+  try { root = await window.showDirectoryPicker({ id: 'techcolours-mods', mode: 'readwrite' }); } catch (e) { return; }
+  let vrfw = true, fantasy = true;
+  try { await root.getDirectoryHandle('VRFW'); } catch (e) { vrfw = false; }
+  try { await root.getDirectoryHandle('InazumaFantasy'); } catch (e) { fantasy = false; }
+  $('#where').textContent = T('Folder: {name}', { name: root.name });
+  if (!vrfw) status(T('This folder has no VRFW: check it is the mods folder of the game you start with the mod launcher.'), 'err');
+  else if (!fantasy) status(T('Folder connected, but it has no Inazuma Fantasy: the moves are made, but without its shop there is nowhere to buy them.'), 'err');
+  else status(T('Mods folder connected.'), 'ok');
+  await load(); renderChanges(); $('#write').disabled = false;
+};
+// the ids of a move's own cut-ins: ev<NN>_<5 digits> in the mod's block of 500 (50000-69999; the Fantasy uses 70000+ and 80000+)
+const evId = (t, fail) => { const n = 50000 + state.block * 500 + ((t.n * 2 + (fail ? 1 : 0)) % 500); return [t.ev.slice(0, 4), String(n)]; };
+$('#write').onclick = async () => {
+  if (!root) return;
+  try {
+    const desc = 'Special moves recoloured with the Technique Colours app, sold in the Technique Shop.';
+    const date = new Date().toISOString().slice(0, 10), num = x => (+x).toFixed(3);
+    await writeAt(`${MOD}/mod.toml`, `id = "${MOD}"\nname = "Technique Colours"\nversion = "1.0.${state.next}"\nauthor = "local"\ndescription = ${tstr(desc)}\npriority = 0\ntype = "content"\ntags = []\nupdated = "${date}"\nprefix = "${MOD}"\nfolder = "${MOD}"\nrequires = ["VRFW>=0.3.0"]\noptional = ["InazumaFantasy"]\nconflicts = []\n# starts switched OFF: turned on in the Mods screen\ndefault_enabled = false\n${TAG}${JSON.stringify(state)}\n`);
+    await writeAt(`${MOD}/text/keys.toml`, `schema = "VRFW.text_key/1"\ndefault_lang = "en"\n` + LANGS.map(l => `\n[${l}.new]\nmod_name = "Technique Colours"\nmod_description = ${tstr(desc)}\n`).join(''));
+    await writeAt(`${MOD}/changelog.toml`, `schema = "VRFW.changelog/1"\n\n[[release]]\nicon = "general"\nnotes = [\n    "Recoloured moves: ${state.techs.length}",\n]\n`);
+    let anims = `schema = "VRFW.anim/2"\nowner = "match"\n# each move's own cut-in(s): a copy of the original's\n`;
+    let fx = `schema = "VRFW.effect/1"\n# each move's effect object: a recoloured copy, loaded by its own cut-in(s)\n`;
+    let tech = `schema = "VRFW.technique/3"\n# copies of the game's moves with their effect recoloured (same numbers, element and animation)\n`;
+    let shop = `schema = "VRFW.shop/2"\n\n[[edit]]\ntarget = "InazumaFantasy.technique_shop"\n`;
+    for (const t of state.techs) {
+      const name = techName(t), evs = [[t.ev, false], ...(t.fail ? [[t.fail, true]] : [])].map(([from, fail]) => { const [pre, id] = evId(t, fail); return { from, fail, id: `${pre}_${id}`, stem: `${pre}${id}0`, name: name + (fail ? '_fail' : '') }; });
+      const stem = evs[0].stem, pre = t.ev.slice(0, 4);
+      fx += `\n# ${t.name} (from ${t.en}, ${t.k})\n[[recolor]]\nobject = "${t.obj}"\ncopy = "${stem}"\ntextures = "all"\nmaterials = "all"\nvertex_colors = "all"\nparticles = true\nhue = ${hexToHsv(t.color)[0].toFixed(1)}\nmode = "set"\nsaturation = ${num(t.sat)}\nvalue = ${num(t.val)}\ncolorize = ${num(t.colorize)}\n${t.keepWhites !== false ? 'keep_whites = 0.92\n' : ''}`;
+      for (const e of evs) {
+        anims += `\n[[event]]\nname = "${e.name}"\nfrom = "${e.from}"\nid = "${e.id}"\n`;
+        fx += `\n[[event_command]]\nevent = "${e.id}"\ncommand = "CMD_799A1EBA"                 # LOAD_ACTOR_RESOURCE\nargs = ["${t.obj}"]\nset = ["${t.obj}", "common/effect/event/${pre}/${stem}/${stem}.objbin"]\n`;
+        // the copied cut-in loads the original's name banner: its own instead (the telop of the move's key)
+        if (t.key) fx += `\n[[event_command]]\nevent = "${e.id}"\nlist = "evt"\ncommand = "CMD_D23AD08F"                 # TELOP_OBJ_LOAD\nset = ["soccer10_01_${t.key}"]\n`;
+      }
+      tech += `\n[[technique]]\nname = "${name}"\n${t.key ? `key = "${t.key}"\n` : ''}base = "${t.k}"\nmanual = true\nevent = "${MOD}.${evs[0].name}"\n${t.fail ? `fail_event = "${MOD}.${evs[1].name}"\n` : ''}${t.element ? `element = "${t.element}"\n` : ''}description_text = "base"\n` + LANGS.map(l => `  [technique.text.${l}]\n  name = ${tstr(t.name)}\n`).join('');
+      shop += `\n  [[edit.entry]]\n  technique = "${MOD}.${name}"    # ${t.name}\n  price = ${t.price}\n  currency = "tk_bb000001"\n`;
+    }
+    const files = { 'content/anims/technique_colours.toml': anims, 'content/effects/technique_colours.toml': fx, 'content/techniques/technique_colours.toml': tech, 'addons/InazumaFantasy/content/shops/technique_colours.toml': shop };
+    // the name banners: one picture per move (in every language), for the moves that have a key
+    const withKey = state.techs.filter(t => t.key);
+    files['content/telops/any/telops.toml'] = withKey.length ? `schema = "VRFW.telop_list/2"\n` + withKey.map(t => `\n[[telop]]\nid = "${t.key}"    # ${t.name}\nfrom = "${t.k}"\n`).join('') : '';
+    for (const t of withKey) await writeAt(`${MOD}/content/telops/any/${t.key}.png`, await telopBlob(t.name, t.element || (baseOf(t.k) || {}).el));
+    try { const d = await dirAt([MOD, 'content', 'telops', 'any']), keep = new Set(withKey.map(t => t.key + '.png')), old = []; for await (const [n] of d.entries()) if (n.endsWith('.png') && !keep.has(n)) old.push(n); for (const n of old) await d.removeEntry(n); } catch (e) { /* none */ }
+    for (const [p, text] of Object.entries(files)) {
+      if (text && state.techs.length) await writeAt(`${MOD}/${p}`, text);
+      else { try { const parts = p.split('/'); await (await dirAt([MOD, ...parts.slice(0, -1)])).removeEntry(parts.at(-1)); } catch (e) { /* not there */ } }
+    }
+    status(T('Mod generated in mods\\{mod} with {n} move(s). Switch «Technique Colours» on in the launcher; they are sold in Inazuma Fantasy\'s Technique Shop.', { mod: MOD, n: state.techs.length }), 'ok');
+  } catch (e) { console.error(e); status(T('Could not write: ') + e.message, 'err'); }
+};
+$('#search').addEventListener('input', renderList); $('#cat').addEventListener('change', renderList);
+applyLang();
+</script>
+</body>
+</html>
