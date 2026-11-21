@@ -36,6 +36,8 @@ canvas { border-radius:10px; border:1px solid var(--line); max-width:100%; }
 #changes .row { cursor:default; align-items:center; }
 h3 { margin:0 0 4px; font-size:15px; }
 .empty { color:var(--dim); text-align:center; margin:auto; }
+  a { color: #7cc4ff; }
+  .vwarn { max-width: 760px; padding: 10px 14px; border-radius: 8px; border: 1px solid #f5b301; background: rgba(245, 179, 1, .12); color: #ffd666; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -44,6 +46,7 @@ h3 { margin:0 0 4px; font-size:15px; }
   <aside class="panel">
     <button id="pick" class="primary"></button>
     <div id="where" class="hint"></div>
+    <div id="pfwarn" class="vwarn"></div>
     <input id="search" type="search">
     <select id="cat"></select>
     <div id="list"></div>
@@ -74,17 +77,24 @@ const PT = {
   'Choose on the left the original move you want in another colour.': 'Escolhe à esquerda a técnica original que queres noutra cor.',
   'Your moves': 'As tuas técnicas', 'Generate the mod': 'Gerar o mod',
   'Writes <b>mods\\TechniqueColours</b>. Close the game first; then switch the mod on in the launcher.': 'Escreve <b>mods\\TechniqueColours</b>. Fecha o jogo antes; depois liga o mod no launcher.',
-  'Each move is a copy of the original (same power, TP and animation) with its effect in another colour and a name of your own; the original stays as it is. They are sold in Inazuma Fantasy\'s Technique Shop. The preview is an approximation: the real result is only seen in the game.': 'Cada técnica é uma cópia da original (a mesma força, TP e animação) com o efeito noutra cor e um nome teu; a original fica como está. Ficam à venda na loja de técnicas do Inazuma Fantasy. A pré-visualização é uma aproximação: o resultado real só se vê no jogo.',
+  'Each move is a copy of the original (same animation; the power and TP of the original or of the step you choose) with its effect in another colour and a name of your own; the original stays as it is. They are sold in Inazuma Fantasy\'s Technique Shop. The preview is an approximation: the real result is only seen in the game.': 'Cada técnica é uma cópia da original (a mesma animação; a força e o TP da original ou do degrau que escolheres) com o efeito noutra cor e um nome teu; a original fica como está. Ficam à venda na loja de técnicas do Inazuma Fantasy. A pré-visualização é uma aproximação: o resultado real só se vê no jogo.',
   'Name in the game': 'Nome no jogo', 'Price (tokens)': 'Preço (fichas)', 'Element': 'Elemento', 'The original\'s ({el})': 'O da original ({el})',
   'Colour': 'Cor', 'Saturation ×': 'Saturação ×', 'Brightness ×': 'Brilho ×', 'Tint whites': 'Tingir brancos', 'Keep whites': 'Manter brancos',
   'The name in the cut-in (one picture for every language):': 'O nome na animação (uma imagem para todas as línguas):',
   'This move was made with an earlier version of the app and shows the original\'s name in the cut-in.': 'Esta técnica foi criada numa versão anterior da app e mostra o nome da original na animação.',
   'Use its own name': 'Usar o nome próprio',
   '(the game sees it as another move: whoever bought it has to buy it again)': '(passa a ser outra técnica para o jogo: quem já a tiver comprado tem de a comprar outra vez)',
+  '⚠ Edge and Chrome cannot open folders inside Program Files (or Windows / AppData). Keep this app and the game outside them. If the game is in Steam\'s default library (C:\\Program Files (x86)\\Steam), move it in Steam: Properties → Installed Files → Move install folder.': '⚠ O Edge e o Chrome não conseguem abrir pastas dentro de Program Files (nem Windows / AppData). Mantém esta app e o jogo fora delas. Se o jogo estiver na biblioteca padrão do Steam (C:\\Program Files (x86)\\Steam), muda-o no Steam: Propriedades → Ficheiros instalados → Mover pasta de instalação.',
+  'Lighten': 'Clarear',
+  'Preview on the move\'s video: find «{en}» in the {site}, download its video and load it here.': 'Pré-visualização no vídeo da técnica: procura «{en}» na {site}, descarrega o vídeo e carrega-o aqui.',
+  'Only a guide: the preview is not what you will see in the game. Here the whole video changes colour, the pitch and the players too; in the game only the move\'s effects change, and some of their parts can turn out lighter, darker or a little different.': 'É só uma orientação: a pré-visualização não é o que vais ver no jogo. Aqui muda a cor do vídeo todo, incluindo o campo e os jogadores; no jogo só mudam os efeitos da técnica, e algumas partes podem ficar mais claras, mais escuras ou um pouco diferentes.',
+  'official encyclopedia': 'enciclopédia oficial', 'Load the video…': 'Carregar o vídeo…', 'Original': 'Original', 'Play': 'Reproduzir', 'Pause': 'Pausa',
+  'This browser cannot show the video preview (no WebGL).': 'Este navegador não consegue mostrar a pré-visualização do vídeo (sem WebGL).',
   'Preview on a sample flame (approximate):': 'Pré-visualização numa chama de exemplo (aproximada):',
   'Save': 'Guardar', 'Create move': 'Criar técnica', 'Delete': 'Apagar',
   'New version of {name}': 'Nova versão de {name}',
-  '{cat} · based on {name} ({en}, {k}) · same power and TP': '{cat} · baseada em {name} ({en}, {k}) · a mesma força e TP',
+  '{cat} · based on {name} ({en}, {k})': '{cat} · baseada em {name} ({en}, {k})',
+  'TP and power': 'TP e força', 'The original\'s ({tp} TP, power {pw})': 'A da original ({tp} TP, força {pw})', '{tp} TP · power {pw}': '{tp} TP · força {pw}', '(the original\'s)': '(a da original)',
   'Give the move a name.': 'Dá um nome à técnica.',
   'Saved. Click «Generate the mod» for the game to see the changes.': 'Guardado. Carrega em «Gerar o mod» para o jogo ver as mudanças.',
   '«{name}» created. Click «Generate the mod» when you are done.': '«{name}» criada. Carrega em «Gerar o mod» quando acabares.',
@@ -109,17 +119,24 @@ const ES = {
   'Choose on the left the original move you want in another colour.': 'Elige a la izquierda la técnica original que quieres en otro color.',
   'Your moves': 'Tus técnicas', 'Generate the mod': 'Generar el mod',
   'Writes <b>mods\\TechniqueColours</b>. Close the game first; then switch the mod on in the launcher.': 'Escribe <b>mods\\TechniqueColours</b>. Cierra el juego antes; después activa el mod en el launcher.',
-  'Each move is a copy of the original (same power, TP and animation) with its effect in another colour and a name of your own; the original stays as it is. They are sold in Inazuma Fantasy\'s Technique Shop. The preview is an approximation: the real result is only seen in the game.': 'Cada técnica es una copia de la original (la misma potencia, TP y animación) con el efecto en otro color y un nombre tuyo; la original queda como está. Se venden en la tienda de técnicas de Inazuma Fantasy. La vista previa es una aproximación: el resultado real solo se ve en el juego.',
+  'Each move is a copy of the original (same animation; the power and TP of the original or of the step you choose) with its effect in another colour and a name of your own; the original stays as it is. They are sold in Inazuma Fantasy\'s Technique Shop. The preview is an approximation: the real result is only seen in the game.': 'Cada técnica es una copia de la original (la misma animación; la potencia y el TP de la original o del nivel que elijas) con el efecto en otro color y un nombre tuyo; la original queda como está. Se venden en la tienda de técnicas de Inazuma Fantasy. La vista previa es una aproximación: el resultado real solo se ve en el juego.',
   'Name in the game': 'Nombre en el juego', 'Price (tokens)': 'Precio (fichas)', 'Element': 'Elemento', 'The original\'s ({el})': 'El de la original ({el})',
   'Colour': 'Color', 'Saturation ×': 'Saturación ×', 'Brightness ×': 'Brillo ×', 'Tint whites': 'Teñir blancos', 'Keep whites': 'Mantener blancos',
   'The name in the cut-in (one picture for every language):': 'El nombre en la animación (una imagen para todos los idiomas):',
   'This move was made with an earlier version of the app and shows the original\'s name in the cut-in.': 'Esta técnica se creó con una versión anterior de la aplicación y muestra el nombre de la original en la animación.',
   'Use its own name': 'Usar su propio nombre',
   '(the game sees it as another move: whoever bought it has to buy it again)': '(el juego la ve como otra técnica: quien ya la haya comprado tiene que comprarla de nuevo)',
+  '⚠ Edge and Chrome cannot open folders inside Program Files (or Windows / AppData). Keep this app and the game outside them. If the game is in Steam\'s default library (C:\\Program Files (x86)\\Steam), move it in Steam: Properties → Installed Files → Move install folder.': '⚠ Edge y Chrome no pueden abrir carpetas dentro de Program Files (ni Windows / AppData). Mantén esta app y el juego fuera de ellas. Si el juego está en la biblioteca predeterminada de Steam (C:\\Program Files (x86)\\Steam), muévelo en Steam: Propiedades → Archivos instalados → Mover carpeta de instalación.',
+  'Lighten': 'Aclarar',
+  'Preview on the move\'s video: find «{en}» in the {site}, download its video and load it here.': 'Vista previa en el vídeo de la técnica: busca «{en}» en la {site}, descarga el vídeo y cárgalo aquí.',
+  'Only a guide: the preview is not what you will see in the game. Here the whole video changes colour, the pitch and the players too; in the game only the move\'s effects change, and some of their parts can turn out lighter, darker or a little different.': 'Es solo una orientación: la vista previa no es lo que verás en el juego. Aquí cambia el color de todo el vídeo, también el campo y los jugadores; en el juego solo cambian los efectos de la técnica, y algunas partes pueden quedar más claras, más oscuras o un poco distintas.',
+  'official encyclopedia': 'enciclopedia oficial', 'Load the video…': 'Cargar el vídeo…', 'Original': 'Original', 'Play': 'Reproducir', 'Pause': 'Pausa',
+  'This browser cannot show the video preview (no WebGL).': 'Este navegador no puede mostrar la vista previa del vídeo (sin WebGL).',
   'Preview on a sample flame (approximate):': 'Vista previa en una llama de ejemplo (aproximada):',
   'Save': 'Guardar', 'Create move': 'Crear técnica', 'Delete': 'Borrar',
   'New version of {name}': 'Nueva versión de {name}',
-  '{cat} · based on {name} ({en}, {k}) · same power and TP': '{cat} · basada en {name} ({en}, {k}) · la misma potencia y TP',
+  '{cat} · based on {name} ({en}, {k})': '{cat} · basada en {name} ({en}, {k})',
+  'TP and power': 'TP y potencia', 'The original\'s ({tp} TP, power {pw})': 'La de la original ({tp} TP, potencia {pw})', '{tp} TP · power {pw}': '{tp} TP · potencia {pw}', '(the original\'s)': '(la de la original)',
   'Give the move a name.': 'Ponle un nombre a la técnica.',
   'Saved. Click «Generate the mod» for the game to see the changes.': 'Guardado. Pulsa «Generar el mod» para que el juego vea los cambios.',
   '«{name}» created. Click «Generate the mod» when you are done.': '«{name}» creada. Pulsa «Generar el mod» cuando termines.',
@@ -135,6 +152,7 @@ const ES = {
   'Could not write: ': 'No se pudo escribir: ',
 };
 let LANG = 'en'; try { LANG = localStorage.getItem('techcolours-lang') || ((navigator.language || '').startsWith('pt') ? 'pt' : (navigator.language || '').startsWith('es') ? 'es' : 'en'); } catch (e) { /* default */ }
+const esc = t => String(t).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]);
 const T = (s, p = {}) => ((LANG === 'pt' ? PT[s] : LANG === 'es' ? ES[s] : null) || s).replace(/\{(\w+)\}/g, (m, k) => k in p ? p[k] : m);
 
 const TECHS = /*TECHS*/[];
@@ -162,9 +180,10 @@ function applyLang() {
   $('#search').placeholder = T('Search the original move…');
   const c = $('#cat').value; $('#cat').innerHTML = [['', 'All'], ['shoot', 'Shots'], ['dribble', 'Dribbles'], ['block', 'Blocks'], ['catch', 'Saves (goalkeeper)']].map(([v, l]) => `<option value="${v}">${T(l)}</option>`).join(''); $('#cat').value = c;
   if (root) $('#where').textContent = T('Folder: {name}', { name: root.name });
+  $('#pfwarn').hidden = !!root; $('#pfwarn').textContent = T('⚠ Edge and Chrome cannot open folders inside Program Files (or Windows / AppData). Keep this app and the game outside them. If the game is in Steam\'s default library (C:\\Program Files (x86)\\Steam), move it in Steam: Properties → Installed Files → Move install folder.');
   $('#yours').textContent = T('Your moves'); $('#write').textContent = T('Generate the mod');
   $('#writehint').innerHTML = T('Writes <b>mods\\TechniqueColours</b>. Close the game first; then switch the mod on in the launcher.');
-  $('#about').textContent = T('Each move is a copy of the original (same power, TP and animation) with its effect in another colour and a name of your own; the original stays as it is. They are sold in Inazuma Fantasy\'s Technique Shop. The preview is an approximation: the real result is only seen in the game.');
+  $('#about').textContent = T('Each move is a copy of the original (same animation; the power and TP of the original or of the step you choose) with its effect in another colour and a name of your own; the original stays as it is. They are sold in Inazuma Fantasy\'s Technique Shop. The preview is an approximation: the real result is only seen in the game.');
   if (cur) open(cur.base, cur.edit); else $('#editor').innerHTML = `<div class="empty">${T('Choose on the left the original move you want in another colour.')}</div>`;
   renderList(); renderChanges();
 }
@@ -182,6 +201,11 @@ function renderList() {
   }
 }
 
+// ---------- TP and power: the game's own scale (VRFW ids workbook: TP -> power at level 1 and at the highest level)
+const TIERS = [[50, [50, 300]], [60, [60, 360]], [70, [70, 440]], [80, [85, 540]], [100, [100, 640]], [110, [120, 720]], [120, [140, 800]]];
+const strengthToml = t => { const tier = t.tier && TIERS.find(([tp]) => tp === t.tier);
+  if (tier) return `tp = ${tier[0]}\npower_min = ${tier[1][0]}\npower_max = ${tier[1][1]}\n`;
+  return (t.pw ? `power_min = ${t.pw[0]}\npower_max = ${t.pw[1]}\n` : '') + (t.tp != null ? `tp = ${t.tp}\n` : ''); };   // (values of a test build)
 // ---------- colours
 const hexToHsv = h => { const n = parseInt(h.slice(1), 16); return rgbToHsv((n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255); };
 const rgbToHsv = (r, g, b) => { const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
@@ -199,36 +223,55 @@ const colourName = hex => { const w = COLOUR_WORDS[LANG] || COLOUR_WORDS.en, [h,
 
 function open(base, edit) {
   cur = { base, edit };
-  const p = edit ? { ...edit } : { name: '', price: 10, element: '', color: '#3fa2ff', sat: 1, val: 1, colorize: 0.3, keepWhites: true };
+  const p = edit ? { ...edit } : { name: '', price: 10, element: '', color: '#3fa2ff', sat: 1, val: 1, colorize: 0.3, keepWhites: true, light: 0 };
   const ed = $('#editor'), field = 'background:#0b1120;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit';
   ed.innerHTML = `<h3></h3><p class="hint" id="meta"></p>
     <div class="grid">
       <label>${T('Name in the game')}</label><input id="tname" maxlength="40" style="${field}"><span></span>
       <label>${T('Price (tokens)')}</label><input id="tprice" type="number" min="0" max="9999" value="${p.price}" style="width:110px;${field}"><span></span>
+      <label>${T('TP and power')}</label><select id="tier" style="width:auto"></select><span></span>
       <label>${T('Element')}</label><select id="tel" style="width:auto">${['', 'fire', 'forest', 'wind', 'mountain', 'void'].map(e => `<option value="${e}" ${(p.element || '') === e ? 'selected' : ''}>${e ? ELN(e) : T('The original\'s ({el})', { el: ELN(base.el) })}</option>`).join('')}</select><span></span>
       <label>${T('Colour')}</label><input type="color" id="col" value="${p.color}"><span></span>
       <label>${T('Saturation ×')}</label><input type="range" id="sat" min="0" max="2" step="0.01" value="${p.sat}"><span id="satv"></span>
       <label>${T('Brightness ×')}</label><input type="range" id="val" min="0" max="2" step="0.01" value="${p.val}"><span id="valv"></span>
+      <label>${T('Lighten')}</label><input type="range" id="light" min="-0.5" max="0.5" step="0.01" value="${p.light || 0}"><span id="lightv"></span>
       <label>${T('Tint whites')}</label><input type="range" id="colz" min="0" max="1" step="0.01" value="${p.colorize}"><span id="colzv"></span>
       <label>${T('Keep whites')}</label><input type="checkbox" id="kw" ${p.keepWhites ? 'checked' : ''} style="justify-self:start"><span></span>
     </div>
     <div class="hint">${T('The name in the cut-in (one picture for every language):')}</div>
     ${edit && !edit.key ? `<div class="status err" style="max-width:760px">${T('This move was made with an earlier version of the app and shows the original\'s name in the cut-in.')} <button id="givekey">${T('Use its own name')}</button> ${T('(the game sees it as another move: whoever bought it has to buy it again)')}</div>` : ''}
     <canvas id="telop" width="864" height="176" style="background:#1d2234"></canvas>
-    <div class="hint">${T('Preview on a sample flame (approximate):')}</div>
-    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><canvas id="before" width="360" height="200"></canvas><span style="color:var(--dim)">→</span><canvas id="after" width="360" height="200"></canvas></div>
+    <div class="hint">${T('Preview on the move\'s video: find «{en}» in the {site}, download its video and load it here.', { en: esc(base.en), site: '<a href="https://zukan.inazuma.jp/en/skill/" target="_blank" rel="noopener">' + T('official encyclopedia') + '</a>' })}</div>
+    <div class="vwarn">⚠ ${T('Only a guide: the preview is not what you will see in the game. Here the whole video changes colour, the pitch and the players too; in the game only the move\'s effects change, and some of their parts can turn out lighter, darker or a little different.')}</div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button id="vload">${T('Load the video…')}</button><input type="file" id="vfile" accept="video/*" hidden>
+      <button id="vplay" hidden></button><label id="vcmpl" hidden style="display:flex;gap:8px;align-items:center">${T('Original')}<input type="range" id="vcmp" min="0" max="1" step="0.01" value="0" style="width:160px"></label></div>
+    <canvas id="vcan" width="640" height="360" hidden style="max-width:100%;border-radius:8px;background:#000"></canvas>
+    <div id="flame"><div class="hint">${T('Preview on a sample flame (approximate):')}</div>
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><canvas id="before" width="360" height="200"></canvas><span style="color:var(--dim)">→</span><canvas id="after" width="360" height="200"></canvas></div></div>
     <div style="display:flex;gap:10px"><button id="apply" class="primary">${edit ? T('Save') : T('Create move')}</button>${edit ? `<button id="drop" class="danger">${T('Delete')}</button>` : ''}</div>`;
   ed.querySelector('h3').textContent = edit ? edit.name : T('New version of {name}', { name: nameOf(base) });
-  $('#meta').textContent = T('{cat} · based on {name} ({en}, {k}) · same power and TP', { cat: CATN(base.cat), name: nameOf(base), en: base.en, k: base.k });
+  $('#meta').textContent = T('{cat} · based on {name} ({en}, {k})', { cat: CATN(base.cat), name: nameOf(base), en: base.en, k: base.k });
+  // TP and power: the original's, or one step of the game's own scale (TP -> power at level 1, the highest level follows)
+  const own = TIERS.find(([tp, pw]) => tp === base.tp && pw[0] === (base.pw || [])[0]);
+  $('#tier').innerHTML = (own ? '' : `<option value="">${T('The original\'s ({tp} TP, power {pw})', { tp: base.tp ?? '?', pw: (base.pw || ['?'])[0] })}</option>`)
+    + TIERS.map(([tp, pw]) => `<option value="${tp}">${T('{tp} TP · power {pw}', { tp, pw: pw[0] })}${own && own[0] === tp ? ' ' + T('(the original\'s)') : ''}</option>`).join('');
+  $('#tier').value = p.tier ? String(p.tier) : own ? String(own[0]) : '';
+  var strength = () => { const v = +$('#tier').value; return { tier: v && !(own && own[0] === v) ? v : null, pw: null, tp: null }; };
   const autoName = () => LANG === 'en' ? `${colourName($('#col').value)} ${nameOf(base)}` : `${nameOf(base)} ${colourName($('#col').value)}`;
   let named = !!edit;
   $('#tname').value = edit ? edit.name : autoName();
   $('#tname').addEventListener('input', () => { named = true; });
   $('#col').addEventListener('input', () => { if (!named) $('#tname').value = autoName(); });
-  for (const id of ['col', 'sat', 'val', 'colz', 'kw']) $('#' + id).addEventListener('input', preview);
+  for (const id of ['col', 'sat', 'val', 'colz', 'kw', 'light']) $('#' + id).addEventListener('input', preview);
+  // a white, grey or black colour: no hue to give, so the move loses its colour; a light one is also lightened
+  // (the slider stays the user's once moved)
+  let lit = !!(edit && edit.light);
+  $('#light').addEventListener('input', () => { lit = true; });
+  $('#col').addEventListener('input', () => { if (lit) return; const [, s, v] = hexToHsv($('#col').value); $('#light').value = s < 0.15 ? (v > 0.8 ? 0.25 : v < 0.25 ? -0.25 : 0) : 0; preview(); });
+  videoPreview(base);
   $('#apply').onclick = () => {
     const name = $('#tname').value.trim(); if (!name) { status(T('Give the move a name.'), 'err'); return; }
-    const v = { name, price: Math.max(0, Math.min(9999, Math.round(+$('#tprice').value || 0))), element: $('#tel').value, color: $('#col').value, sat: +$('#sat').value, val: +$('#val').value, colorize: +$('#colz').value, keepWhites: $('#kw').checked };
+    const v = { name, price: Math.max(0, Math.min(9999, Math.round(+$('#tprice').value || 0))), element: $('#tel').value, color: $('#col').value, sat: +$('#sat').value, val: +$('#val').value, colorize: +$('#colz').value, keepWhites: $('#kw').checked, light: +$('#light').value, ...strength() };
     if (edit) Object.assign(edit, v);
     else { state.next++; state.techs.push({ n: state.next, id: `tc_${state.uid}_${state.next}`, key: base.k.slice(0, 3) + String(60000 + state.block * 500 + state.next % 500), k: base.k, en: base.en, obj: base.obj, ev: base.ev, fail: base.fail || null, ...v }); }
     renderChanges(); open(base, edit || state.techs.at(-1)); $('#write').disabled = !root;
@@ -316,18 +359,70 @@ function sample(c) {
   g.putImageData(img, 0, 0);
 }
 // an approximation of VRFW's set mode: hue set, saturation ×, value ×, greys raised to «colorize» saturation, whites kept
+// the colour's own saturation counts: a vivid colour (60 % or more) as chosen, a pale one less, white / grey / black none
+// (so white gives a colourless move instead of a red one: hue 0)
+const colourAmount = hex => Math.min(1, hexToHsv(hex)[1] / 0.6);
+const effective = () => { const ca = colourAmount($('#col').value);
+  return { H: hexToHsv($('#col').value)[0], sat: +$('#sat').value * ca, val: +$('#val').value, colorize: +$('#colz').value * ca, kw: $('#kw').checked, light: +$('#light').value }; };
 function preview() {
-  const v = { color: $('#col').value, sat: +$('#sat').value, val: +$('#val').value, colorize: +$('#colz').value, kw: $('#kw').checked };
-  $('#satv').textContent = v.sat.toFixed(2); $('#valv').textContent = v.val.toFixed(2); $('#colzv').textContent = v.colorize.toFixed(2);
+  const v = { color: $('#col').value, ...effective() };
+  $('#satv').textContent = (+$('#sat').value).toFixed(2); $('#valv').textContent = v.val.toFixed(2); $('#colzv').textContent = (+$('#colz').value).toFixed(2); $('#lightv').textContent = v.light.toFixed(2);
   const b = $('#before'), a = $('#after'); sample(b); sample(a);
   const g = a.getContext('2d'), img = g.getImageData(0, 0, a.width, a.height), d = img.data, H = hexToHsv(v.color)[0];
   for (let i = 0; i < d.length; i += 4) {
     const r = d[i] / 255, gg = d[i + 1] / 255, bb = d[i + 2] / 255;
     if (v.kw && Math.min(r, gg, bb) >= 0.92) continue;
     const [, s, val] = rgbToHsv(r, gg, bb), rgb = hsvToRgb(H, Math.min(1, Math.max(s * v.sat, v.colorize)), Math.min(1, val * v.val));
-    for (let k = 0; k < 3; k++) d[i + k] = Math.round(rgb[k] * 255);
+    for (let k = 0; k < 3; k++) d[i + k] = Math.round(Math.max(0, Math.min(1, rgb[k] + v.light)) * 255);
   }
   g.putImageData(img, 0, 0);
+}
+// ---------- the preview on the move's own video (the official encyclopedia's, loaded by the user): the same recolour as
+// above on every frame (WebGL); the slider shows the original on the left part. The video stays for the session, by move.
+const VIDEOS = {};
+let videoLoop = 0;
+function videoPreview(base) {
+  cancelAnimationFrame(videoLoop);
+  $('#vload').onclick = () => $('#vfile').click();
+  $('#vfile').onchange = () => { const f = $('#vfile').files[0]; if (!f) return; if (VIDEOS[base.k]) URL.revokeObjectURL(VIDEOS[base.k].src); const v = document.createElement('video'); v.src = URL.createObjectURL(f); v.muted = true; v.loop = true; v.playsInline = true; VIDEOS[base.k] = v; videoPreview(base); };
+  const v = VIDEOS[base.k]; if (!v) return;
+  const c = $('#vcan'), gl = c.getContext('webgl', { preserveDrawingBuffer: false });
+  if (!gl) { status(T('This browser cannot show the video preview (no WebGL).'), 'err'); return; }
+  c.hidden = false; $('#flame').hidden = true; $('#vplay').hidden = false; $('#vcmpl').hidden = false;
+  const vs = 'attribute vec2 p; varying vec2 uv; void main() { uv = vec2(p.x * 0.5 + 0.5, 0.5 - p.y * 0.5); gl_Position = vec4(p, 0.0, 1.0); }';
+  const fs = `precision mediump float; varying vec2 uv; uniform sampler2D tex; uniform float H, sat, val, colz, kw, light, split;
+    vec3 hsv(vec3 c) { vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0); vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));
+      vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r)); float d = q.x - min(q.w, q.y);
+      return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + 1e-10)), d / (q.x + 1e-10), q.x); }
+    vec3 rgb(vec3 c) { vec3 p = abs(fract(c.xxx + vec3(1.0, 2.0 / 3.0, 1.0 / 3.0)) * 6.0 - 3.0); return c.z * mix(vec3(1.0), clamp(p - 1.0, 0.0, 1.0), c.y); }
+    void main() { vec3 c = texture2D(tex, uv).rgb, o = c;
+      if (uv.x >= split && !(kw > 0.5 && min(c.r, min(c.g, c.b)) >= 0.92)) { vec3 h = hsv(c);
+        o = clamp(rgb(vec3(H / 360.0, clamp(max(h.y * sat, colz), 0.0, 1.0), min(1.0, h.z * val))) + light, 0.0, 1.0); }
+      if (split > 0.0 && abs(uv.x - split) < 0.002) o = vec3(1.0);
+      gl_FragColor = vec4(o, 1.0); }`;
+  const sh = (t, src) => { const x = gl.createShader(t); gl.shaderSource(x, src); gl.compileShader(x); return x; };
+  const pr = gl.createProgram(); gl.attachShader(pr, sh(gl.VERTEX_SHADER, vs)); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, fs)); gl.linkProgram(pr); gl.useProgram(pr);
+  const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+  const ap = gl.getAttribLocation(pr, 'p'); gl.enableVertexAttribArray(ap); gl.vertexAttribPointer(ap, 2, gl.FLOAT, false, 0, 0);
+  const tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
+  for (const [k, w] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, w);
+  const u = n => gl.getUniformLocation(pr, n);
+  const playLabel = () => { $('#vplay').textContent = v.paused ? T('Play') : T('Pause'); };
+  $('#vplay').onclick = () => { v.paused ? v.play() : v.pause(); playLabel(); };
+  const frame = () => {
+    if (!document.body.contains(c)) return;
+    if (v.readyState >= 2) {
+      if (c.width !== v.videoWidth && v.videoWidth) { c.width = Math.min(960, v.videoWidth); c.height = Math.round(c.width * v.videoHeight / v.videoWidth); }
+      gl.viewport(0, 0, c.width, c.height);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, v);
+      const e = effective();
+      gl.uniform1f(u('H'), e.H); gl.uniform1f(u('sat'), e.sat); gl.uniform1f(u('val'), e.val); gl.uniform1f(u('colz'), e.colorize);
+      gl.uniform1f(u('kw'), e.kw ? 1 : 0); gl.uniform1f(u('light'), e.light); gl.uniform1f(u('split'), +$('#vcmp').value);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    }
+    videoLoop = requestAnimationFrame(frame);
+  };
+  v.play().catch(() => {}).finally(playLabel); frame();
 }
 function renderChanges() {
   const box = $('#changes'); box.textContent = '';
@@ -359,7 +454,7 @@ $('#pick').onclick = async () => {
   let vrfw = true, fantasy = true;
   try { await root.getDirectoryHandle('VRFW'); } catch (e) { vrfw = false; }
   try { await root.getDirectoryHandle('InazumaFantasy'); } catch (e) { fantasy = false; }
-  $('#where').textContent = T('Folder: {name}', { name: root.name });
+  $('#where').textContent = T('Folder: {name}', { name: root.name }); $('#pfwarn').hidden = true;
   if (!vrfw) status(T('This folder has no VRFW: check it is the mods folder of the game you start with the mod launcher.'), 'err');
   else if (!fantasy) status(T('Folder connected, but it has no Inazuma Fantasy: the moves are made, but without its shop there is nowhere to buy them.'), 'err');
   else status(T('Mods folder connected.'), 'ok');
@@ -377,19 +472,19 @@ $('#write').onclick = async () => {
     await writeAt(`${MOD}/changelog.toml`, `schema = "VRFW.changelog/1"\n\n[[release]]\nicon = "general"\nnotes = [\n    "Recoloured moves: ${state.techs.length}",\n]\n`);
     let anims = `schema = "VRFW.anim/2"\nowner = "match"\n# each move's own cut-in(s): a copy of the original's\n`;
     let fx = `schema = "VRFW.effect/1"\n# each move's effect object: a recoloured copy, loaded by its own cut-in(s)\n`;
-    let tech = `schema = "VRFW.technique/3"\n# copies of the game's moves with their effect recoloured (same numbers, element and animation)\n`;
+    let tech = `schema = "VRFW.technique/3"\n# copies of the game's moves with their effect recoloured (power, TP and element: the original's unless written here)\n`;
     let shop = `schema = "VRFW.shop/2"\n\n[[edit]]\ntarget = "InazumaFantasy.technique_shop"\n`;
     for (const t of state.techs) {
       const name = techName(t), evs = [[t.ev, false], ...(t.fail ? [[t.fail, true]] : [])].map(([from, fail]) => { const [pre, id] = evId(t, fail); return { from, fail, id: `${pre}_${id}`, stem: `${pre}${id}0`, name: name + (fail ? '_fail' : '') }; });
       const stem = evs[0].stem, pre = t.ev.slice(0, 4);
-      fx += `\n# ${t.name} (from ${t.en}, ${t.k})\n[[recolor]]\nobject = "${t.obj}"\ncopy = "${stem}"\ntextures = "all"\nmaterials = "all"\nvertex_colors = "all"\nparticles = true\nhue = ${hexToHsv(t.color)[0].toFixed(1)}\nmode = "set"\nsaturation = ${num(t.sat)}\nvalue = ${num(t.val)}\ncolorize = ${num(t.colorize)}\n${t.keepWhites !== false ? 'keep_whites = 0.92\n' : ''}`;
+      fx += `\n# ${t.name} (from ${t.en}, ${t.k})\n[[recolor]]\nobject = "${t.obj}"\ncopy = "${stem}"\ntextures = "all"\nmaterials = "all"\nvertex_colors = "all"\nparticles = true\nhue = ${hexToHsv(t.color)[0].toFixed(1)}\nmode = "set"\nsaturation = ${num(t.sat * colourAmount(t.color))}\nvalue = ${num(t.val)}\ncolorize = ${num(t.colorize * colourAmount(t.color))}\n${t.light ? `brightness = ${num(t.light)}\n` : ''}${t.keepWhites !== false ? 'keep_whites = 0.92\n' : ''}`;
       for (const e of evs) {
         anims += `\n[[event]]\nname = "${e.name}"\nfrom = "${e.from}"\nid = "${e.id}"\n`;
         fx += `\n[[event_command]]\nevent = "${e.id}"\ncommand = "CMD_799A1EBA"                 # LOAD_ACTOR_RESOURCE\nargs = ["${t.obj}"]\nset = ["${t.obj}", "common/effect/event/${pre}/${stem}/${stem}.objbin"]\n`;
         // the copied cut-in loads the original's name banner: its own instead (the telop of the move's key)
         if (t.key) fx += `\n[[event_command]]\nevent = "${e.id}"\nlist = "evt"\ncommand = "CMD_D23AD08F"                 # TELOP_OBJ_LOAD\nset = ["soccer10_01_${t.key}"]\n`;
       }
-      tech += `\n[[technique]]\nname = "${name}"\n${t.key ? `key = "${t.key}"\n` : ''}base = "${t.k}"\nmanual = true\nevent = "${MOD}.${evs[0].name}"\n${t.fail ? `fail_event = "${MOD}.${evs[1].name}"\n` : ''}${t.element ? `element = "${t.element}"\n` : ''}description_text = "base"\n` + LANGS.map(l => `  [technique.text.${l}]\n  name = ${tstr(t.name)}\n`).join('');
+      tech += `\n[[technique]]\nname = "${name}"\n${t.key ? `key = "${t.key}"\n` : ''}base = "${t.k}"\nmanual = true\nevent = "${MOD}.${evs[0].name}"\n${t.fail ? `fail_event = "${MOD}.${evs[1].name}"\n` : ''}${t.element ? `element = "${t.element}"\n` : ''}${strengthToml(t)}description_text = "base"\n` + LANGS.map(l => `  [technique.text.${l}]\n  name = ${tstr(t.name)}\n`).join('');
       shop += `\n  [[edit.entry]]\n  technique = "${MOD}.${name}"    # ${t.name}\n  price = ${t.price}\n  currency = "tk_bb000001"\n`;
     }
     const files = { 'content/anims/technique_colours.toml': anims, 'content/effects/technique_colours.toml': fx, 'content/techniques/technique_colours.toml': tech, 'addons/InazumaFantasy/content/shops/technique_colours.toml': shop };

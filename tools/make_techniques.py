@@ -1,5 +1,6 @@
 """Writes src/data/techniques.json from the VRFW ids workbook (mods\\VRFW\\VRFW ids.xlsx): every move of the base game that has
-its own cut-in, with its names (en / pt / es), category, element, effect object and cut-in events.
+its own cut-in, with its names (en / pt / es), category, element, power (level 1 / highest level), TP cost, effect object and
+cut-in events.
 Usage: python tools/make_techniques.py "path\\to\\VRFW ids.xlsx"   (needs openpyxl)"""
 import json, re, sys, pathlib
 import openpyxl
@@ -13,6 +14,8 @@ for r in rows:
     t = {'k': r[ix['technique']], 'en': r[ix['name_en']], 'pt': r[ix['name_pt']], 'es': r[ix['name_es']], 'cat': r[ix['category']],
          'el': r[ix['element']], 'obj': f'ev{m[1]}{m[2]}0', 'ev': ev}   # the effect object: the cut-in's stem + 0 (ev60_00650 -> ev60006500)
     if r[ix['fail_event']]: t['fail'] = str(r[ix['fail_event']])
+    if r[ix['power_min']] is not None: t['pw'] = [int(r[ix['power_min']]), int(r[ix['power_max']] or r[ix['power_min']])]
+    if r[ix['tp']] is not None: t['tp'] = int(r[ix['tp']])
     if (t['en'], t['obj']) in seen: continue
     seen.add((t['en'], t['obj'])); out.append(t)
 dst = pathlib.Path(__file__).parent.parent / 'src' / 'data' / 'techniques.json'

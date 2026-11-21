@@ -1,19 +1,26 @@
 TECHNIQUE COLOURS - técnicas recoloreadas para Inazuma Fantasy
 
   1. Descomprime todo primero (la aplicación no funciona desde dentro de un zip),
-     PERO NO dentro de la carpeta mods del juego: la aplicación no es un mod.
+     PERO NO dentro de la carpeta mods del juego (la aplicación no es un mod)
+     ni dentro de Program Files (mira abajo).
   2. Abre "Technique Colours.bat" (Microsoft Edge) o technique-colours.html
      en Edge o Chrome.
   3. Elige la carpeta mods del juego (el que abres con el launcher de mods, con
      VRFW e InazumaFantasy dentro).
-  4. Busca la técnica original, elige el color, el nombre y el precio y pulsa
-     "Crear técnica".
+  4. Busca la técnica original, elige el color, el nombre, el precio y el TP /
+     potencia y pulsa "Crear técnica". Para ver los colores en el vídeo de la
+     técnica, descárgalo de https://zukan.inazuma.jp/en/skill/ y cárgalo en la app.
   5. Con el juego cerrado, pulsa "Generar el mod" y activa "Technique Colours"
      en el launcher. Tus técnicas están en la tienda de técnicas de Inazuma Fantasy.
 
   - La aplicación solo escribe dentro de mods\TechniqueColours. Nada sale de tu ordenador.
   - Antes de borrar una técnica en la aplicación, quítasela a los jugadores que la aprendieron.
   - No uses el juego en línea ni cross-save con mods.
+  - Program Files: Edge y Chrome no abren carpetas dentro de Program Files,
+    Program Files (x86), Windows o AppData. Mantén la aplicación Y el juego
+    fuera de ellas. Si el juego está en la biblioteca predeterminada de Steam,
+    muévelo en Steam: clic derecho en el juego > Propiedades > Archivos
+    instalados > Mover carpeta de instalación.
 
 Los nombres de las animaciones usan la fuente Rum Raisin (SIL Open Font License 1.1, ver OFL.txt).
-Código (GPL-3.0): https://github.com/Jepegui/inazuma-technique-colours
+Código (GPL-3.0): https://github.com/Jepegui/inazuma-technique-colours-mod
