@@ -1,4 +1,4 @@
-TECHNIQUE COLOURS - técnicas recoloridas para o Inazuma Fantasy
+TECHNIQUE COLOURS 1.2 - técnicas recoloridas para o Inazuma Fantasy
 
   1. Descomprime tudo primeiro (a app não funciona de dentro de um zip),
      MAS NÃO dentro da pasta mods do jogo (a app não é um mod) nem dentro de
@@ -13,7 +13,8 @@ TECHNIQUE COLOURS - técnicas recoloridas para o Inazuma Fantasy
   5. Com o jogo fechado, carrega em "Gerar o mod" e liga o "Technique Colours"
      no launcher. As tuas técnicas estão na loja de técnicas do Inazuma Fantasy.
 
-  - A app só escreve dentro de mods\TechniqueColours. Nada sai do teu computador.
+  - A app só escreve dentro de mods\TechniqueColours (e dos mods que criares
+    com "+ Novo"). Nada sai do teu computador.
   - Antes de apagar uma técnica na app, tira-a aos jogadores que a aprenderam.
   - Não uses jogo online nem cross-save com mods.
   - Program Files: o Edge e o Chrome não abrem pastas dentro de Program Files,
@@ -22,5 +23,6 @@ TECHNIQUE COLOURS - técnicas recoloridas para o Inazuma Fantasy
     direito no jogo > Propriedades > Ficheiros instalados > Mover pasta de
     instalação.
 
-Os nomes nas animações usam a letra Rum Raisin (SIL Open Font License 1.1, ver OFL.txt).
+Os nomes nas animações usam a letra Rum Raisin por predefinição, outra de seis à escolha, ou um ficheiro de letra teu.
+As letras da app e as suas licenças (SIL OFL 1.1 / Apache 2.0): ver FONTS.txt.
 Código (GPL-3.0): https://github.com/Jepegui/inazuma-technique-colours-mod

@@ -4,7 +4,13 @@
 <meta charset="utf-8">
 <title>Technique Colours</title>
 <style>
-@font-face { font-family:'TC Pointy'; src:url(data:font/woff2;base64,/*FONT*/) format('woff2'); font-weight:400; }
+@font-face { font-family:'TC Pointy'; src:url(data:font/woff2;base64,/*FONT:RumRaisin*/) format('woff2'); font-weight:400; }
+@font-face { font-family:'TC Lilita'; src:url(data:font/woff2;base64,/*FONT:LilitaOne*/) format('woff2'); font-weight:400; }
+@font-face { font-family:'TC Chewy'; src:url(data:font/woff2;base64,/*FONT:Chewy*/) format('woff2'); font-weight:400; }
+@font-face { font-family:'TC Spicy'; src:url(data:font/woff2;base64,/*FONT:SpicyRice*/) format('woff2'); font-weight:400; }
+@font-face { font-family:'TC Titan'; src:url(data:font/woff2;base64,/*FONT:TitanOne*/) format('woff2'); font-weight:400; }
+@font-face { font-family:'TC Bangers'; src:url(data:font/woff2;base64,/*FONT:Bangers*/) format('woff2'); font-weight:400; }
+@font-face { font-family:'TC Luckiest'; src:url(data:font/woff2;base64,/*FONT:LuckiestGuy*/) format('woff2'); font-weight:400; }
 :root { --bg:#0f1524; --panel:#182033; --panel2:#1f2940; --line:#2c3854; --text:#e8edf7; --dim:#93a0bb; --acc:#ffb800; --blue:#3fa2ff; --ok:#3ccf7a; --err:#ff6b6b; }
 * { box-sizing:border-box; } [hidden] { display:none !important; }
 body { margin:0; background:var(--bg); color:var(--text); font:14px/1.45 "Segoe UI", system-ui, sans-serif; }
@@ -33,6 +39,9 @@ canvas { border-radius:10px; border:1px solid var(--line); max-width:100%; }
 .status { padding:8px 12px; border-radius:8px; background:var(--panel2); }
 .status.ok { color:var(--ok); } .status.err { color:var(--err); }
 .hint { color:var(--dim); font-size:13px; max-width:760px; }
+.modbar { display:grid; grid-template-columns:1fr auto auto; gap:6px; align-items:end; }
+.modbar label { display:grid; gap:4px; font-size:12px; color:var(--dim); }
+.modbar select { min-width:0; font-weight:600; }
 #changes .row { cursor:default; align-items:center; }
 h3 { margin:0 0 4px; font-size:15px; }
 .empty { color:var(--dim); text-align:center; margin:auto; }
@@ -46,6 +55,7 @@ h3 { margin:0 0 4px; font-size:15px; }
   <aside class="panel">
     <button id="pick" class="primary"></button>
     <div id="where" class="hint"></div>
+    <div class="modbar" id="modbar" hidden><label><span id="modlbl"></span><select id="modpick"></select></label><button id="modnew"></button><button id="modren"></button></div>
     <div id="pfwarn" class="vwarn"></div>
     <input id="search" type="search">
     <select id="cat"></select>
@@ -76,8 +86,22 @@ const PT = {
   'Fire': 'Fogo', 'Forest': 'Floresta', 'Wind': 'Vento', 'Mountain': 'Montanha', 'Void': 'Vazio',
   'Choose on the left the original move you want in another colour.': 'Escolhe à esquerda a técnica original que queres noutra cor.',
   'Your moves': 'As tuas técnicas', 'Generate the mod': 'Gerar o mod',
-  'Writes <b>mods\\TechniqueColours</b>. Close the game first; then switch the mod on in the launcher.': 'Escreve <b>mods\\TechniqueColours</b>. Fecha o jogo antes; depois liga o mod no launcher.',
+  'Writes <b>mods\\{mod}</b>. Close the game first; then switch the mod on in the launcher.': 'Escreve <b>mods\\{mod}</b>. Fecha o jogo antes; depois liga o mod no launcher.',
   'Each move is a copy of the original (same animation; the power and TP of the original or of the step you choose) with its effect in another colour and a name of your own; the original stays as it is. They are sold in Inazuma Fantasy\'s Technique Shop. The preview is an approximation: the real result is only seen in the game.': 'Cada técnica é uma cópia da original (a mesma animação; a força e o TP da original ou do degrau que escolheres) com o efeito noutra cor e um nome teu; a original fica como está. Ficam à venda na loja de técnicas do Inazuma Fantasy. A pré-visualização é uma aproximação: o resultado real só se vê no jogo.',
+  'Font of the name': 'Letra do nome', '(default)': '(predefinida)', 'Your own font file…': 'Um ficheiro de letra teu…', 'Choose file…': 'Escolher ficheiro…', 'no file chosen yet': 'ainda sem ficheiro',
+  'Font «{name}» loaded. Every move that uses your own font takes it when you generate the mod.': 'Letra «{name}» carregada. Todas as técnicas que usam a tua letra ficam com ela quando gerares o mod.',
+  '«{name}» could not be read as a font (use a .ttf, .otf, .woff or .woff2 file).': 'Não foi possível ler «{name}» como letra (usa um ficheiro .ttf, .otf, .woff ou .woff2).',
+  'Mod generated, but your own font file is missing: {names} got the default font. Choose the file again in one of them and generate the mod.': 'Mod gerado, mas falta o teu ficheiro de letra: {names} ficaram com a letra predefinida. Escolhe outra vez o ficheiro numa delas e gera o mod.',
+  'Mod': 'Mod', '+ New': '+ Novo', 'Rename': 'Mudar o nome',
+  'Working on «{mod}» (mods\\{folder}).': 'A trabalhar em «{mod}» (mods\\{folder}).',
+  'Name of the new mod, as the launcher will show it (for example «Dark Moves»):': 'Nome do novo mod, como o launcher o vai mostrar (por exemplo «Técnicas Sombrias»):',
+  'Mod «{name}» created: its moves go to mods\\{folder} when you click «Generate the mod». Switch it on in the launcher afterwards.': 'Mod «{name}» criado: as técnicas dele vão para mods\\{folder} quando carregares em «Gerar o mod». Depois liga-o no launcher.',
+  'New name of «{name}», as the launcher shows it:': 'Novo nome de «{name}», como o launcher o mostra:',
+  'Renamed (the folder stays mods\\{folder}). Click «Generate the mod» for the launcher to show it.': 'Nome mudado (a pasta continua mods\\{folder}). Carrega em «Gerar o mod» para o launcher o mostrar.',
+  'The {g} parts': 'As partes {g}', 'A colour of their own': 'Cor própria', '(the {g} parts, and the rest)': '(as partes {g} e o resto)',
+  'red / orange': 'vermelhas / laranja', 'blue / cyan': 'azuis / ciano', 'purple': 'roxas', 'blue': 'azuis',
+  'The move\'s colour': 'A cor da técnica', 'Keep the original': 'Manter a original', '(this move has parts of {n} colours: below, each can keep the original or take another)': '(esta técnica tem partes de {n} cores: em baixo, cada uma pode manter a original ou ter outra)',
+  'red': 'vermelhas', 'orange': 'laranja', 'yellow': 'amarelas', 'green': 'verdes', 'cyan': 'ciano', 'pink': 'rosa',
   'Name in the game': 'Nome no jogo', 'Price (tokens)': 'Preço (fichas)', 'Element': 'Elemento', 'The original\'s ({el})': 'O da original ({el})',
   'Colour': 'Cor', 'Saturation ×': 'Saturação ×', 'Brightness ×': 'Brilho ×', 'Tint whites': 'Tingir brancos', 'Keep whites': 'Manter brancos',
   'The name in the cut-in (one picture for every language):': 'O nome na animação (uma imagem para todas as línguas):',
@@ -85,6 +109,13 @@ const PT = {
   'Use its own name': 'Usar o nome próprio',
   '(the game sees it as another move: whoever bought it has to buy it again)': '(passa a ser outra técnica para o jogo: quem já a tiver comprado tem de a comprar outra vez)',
   '⚠ Edge and Chrome cannot open folders inside Program Files (or Windows / AppData). Keep this app and the game outside them. If the game is in Steam\'s default library (C:\\Program Files (x86)\\Steam), move it in Steam: Properties → Installed Files → Move install folder.': '⚠ O Edge e o Chrome não conseguem abrir pastas dentro de Program Files (nem Windows / AppData). Mantém esta app e o jogo fora delas. Se o jogo estiver na biblioteca padrão do Steam (C:\\Program Files (x86)\\Steam), muda-o no Steam: Propriedades → Ficheiros instalados → Mover pasta de instalação.',
+  '3D model': 'Modelo 3D',
+  'Recolour it': 'Recolorir',
+  'In its own colour': 'Com uma cor própria',
+  'This move has a 3D figure (a dragon, a giant …) besides its effects: it can keep its colour, take the move\'s colour or one of its own.': 'Esta técnica tem uma figura 3D (um dragão, um gigante …) além dos efeitos: pode ficar com a cor original, ficar com a cor da técnica ou ter uma cor própria.',
+  'Other effects': 'Outros efeitos',
+  'extra effect': 'efeito extra',
+  'The cut-in has other effects too ({names}): they can keep their colour, take the move\'s colour or one of their own.': 'A animação tem outros efeitos ({names}): podem ficar com a cor original, ficar com a cor da técnica ou ter uma cor própria.',
   'Lighten': 'Clarear',
   'Preview on the move\'s video: find «{en}» in the {site}, download its video and load it here.': 'Pré-visualização no vídeo da técnica: procura «{en}» na {site}, descarrega o vídeo e carrega-o aqui.',
   'Only a guide: the preview is not what you will see in the game. Here the whole video changes colour, the pitch and the players too; in the game only the move\'s effects change, and some of their parts can turn out lighter, darker or a little different.': 'É só uma orientação: a pré-visualização não é o que vais ver no jogo. Aqui muda a cor do vídeo todo, incluindo o campo e os jogadores; no jogo só mudam os efeitos da técnica, e algumas partes podem ficar mais claras, mais escuras ou um pouco diferentes.',
@@ -106,7 +137,7 @@ const PT = {
   'This folder has no VRFW: check it is the mods folder of the game you start with the mod launcher.': 'Esta pasta não tem o VRFW: confirma que é a pasta mods do jogo que abres com o launcher de mods.',
   'Folder connected, but it has no Inazuma Fantasy: the moves are made, but without its shop there is nowhere to buy them.': 'Pasta ligada, mas não tem o Inazuma Fantasy: as técnicas são criadas, mas sem a loja não há onde as comprar.',
   'Mods folder connected.': 'Pasta mods ligada.',
-  'Mod generated in mods\\{mod} with {n} move(s). Switch «Technique Colours» on in the launcher; they are sold in Inazuma Fantasy\'s Technique Shop.': 'Mod gerado em mods\\{mod} com {n} técnica(s). Liga «Technique Colours» no launcher; ficam à venda na loja de técnicas do Inazuma Fantasy.',
+  'Mod generated in mods\\{mod} with {n} move(s). Switch «{name}» on in the launcher; they are sold in Inazuma Fantasy\'s Technique Shop.': 'Mod gerado em mods\\{mod} com {n} técnica(s). Liga «{name}» no launcher; ficam à venda na loja de técnicas do Inazuma Fantasy.',
   'Could not write: ': 'Não foi possível escrever: ',
 };
 const ES = {
@@ -118,8 +149,22 @@ const ES = {
   'Fire': 'Fuego', 'Forest': 'Bosque', 'Wind': 'Viento', 'Mountain': 'Montaña', 'Void': 'Vacío',
   'Choose on the left the original move you want in another colour.': 'Elige a la izquierda la técnica original que quieres en otro color.',
   'Your moves': 'Tus técnicas', 'Generate the mod': 'Generar el mod',
-  'Writes <b>mods\\TechniqueColours</b>. Close the game first; then switch the mod on in the launcher.': 'Escribe <b>mods\\TechniqueColours</b>. Cierra el juego antes; después activa el mod en el launcher.',
+  'Writes <b>mods\\{mod}</b>. Close the game first; then switch the mod on in the launcher.': 'Escribe <b>mods\\{mod}</b>. Cierra el juego antes; después activa el mod en el launcher.',
   'Each move is a copy of the original (same animation; the power and TP of the original or of the step you choose) with its effect in another colour and a name of your own; the original stays as it is. They are sold in Inazuma Fantasy\'s Technique Shop. The preview is an approximation: the real result is only seen in the game.': 'Cada técnica es una copia de la original (la misma animación; la potencia y el TP de la original o del nivel que elijas) con el efecto en otro color y un nombre tuyo; la original queda como está. Se venden en la tienda de técnicas de Inazuma Fantasy. La vista previa es una aproximación: el resultado real solo se ve en el juego.',
+  'Font of the name': 'Fuente del nombre', '(default)': '(predeterminada)', 'Your own font file…': 'Tu propio archivo de fuente…', 'Choose file…': 'Elegir archivo…', 'no file chosen yet': 'aún sin archivo',
+  'Font «{name}» loaded. Every move that uses your own font takes it when you generate the mod.': 'Fuente «{name}» cargada. Todas las técnicas que usan tu fuente la tendrán al generar el mod.',
+  '«{name}» could not be read as a font (use a .ttf, .otf, .woff or .woff2 file).': 'No se pudo leer «{name}» como fuente (usa un archivo .ttf, .otf, .woff o .woff2).',
+  'Mod generated, but your own font file is missing: {names} got the default font. Choose the file again in one of them and generate the mod.': 'Mod generado, pero falta tu archivo de fuente: {names} se quedaron con la fuente predeterminada. Vuelve a elegir el archivo en una de ellas y genera el mod.',
+  'Mod': 'Mod', '+ New': '+ Nuevo', 'Rename': 'Renombrar',
+  'Working on «{mod}» (mods\\{folder}).': 'Trabajando en «{mod}» (mods\\{folder}).',
+  'Name of the new mod, as the launcher will show it (for example «Dark Moves»):': 'Nombre del nuevo mod, como lo mostrará el launcher (por ejemplo «Técnicas Oscuras»):',
+  'Mod «{name}» created: its moves go to mods\\{folder} when you click «Generate the mod». Switch it on in the launcher afterwards.': 'Mod «{name}» creado: sus técnicas irán a mods\\{folder} cuando pulses «Generar el mod». Después actívalo en el launcher.',
+  'New name of «{name}», as the launcher shows it:': 'Nuevo nombre de «{name}», como lo muestra el launcher:',
+  'Renamed (the folder stays mods\\{folder}). Click «Generate the mod» for the launcher to show it.': 'Nombre cambiado (la carpeta sigue siendo mods\\{folder}). Pulsa «Generar el mod» para que el launcher lo muestre.',
+  'The {g} parts': 'Las partes {g}', 'A colour of their own': 'Color propio', '(the {g} parts, and the rest)': '(las partes {g} y el resto)',
+  'red / orange': 'rojas / naranjas', 'blue / cyan': 'azules / cian', 'purple': 'moradas', 'blue': 'azules',
+  'The move\'s colour': 'El color de la técnica', 'Keep the original': 'Mantener el original', '(this move has parts of {n} colours: below, each can keep the original or take another)': '(esta técnica tiene partes de {n} colores: abajo, cada una puede mantener el original o tener otro)',
+  'red': 'rojas', 'orange': 'naranjas', 'yellow': 'amarillas', 'green': 'verdes', 'cyan': 'cian', 'pink': 'rosas',
   'Name in the game': 'Nombre en el juego', 'Price (tokens)': 'Precio (fichas)', 'Element': 'Elemento', 'The original\'s ({el})': 'El de la original ({el})',
   'Colour': 'Color', 'Saturation ×': 'Saturación ×', 'Brightness ×': 'Brillo ×', 'Tint whites': 'Teñir blancos', 'Keep whites': 'Mantener blancos',
   'The name in the cut-in (one picture for every language):': 'El nombre en la animación (una imagen para todos los idiomas):',
@@ -127,6 +172,13 @@ const ES = {
   'Use its own name': 'Usar su propio nombre',
   '(the game sees it as another move: whoever bought it has to buy it again)': '(el juego la ve como otra técnica: quien ya la haya comprado tiene que comprarla de nuevo)',
   '⚠ Edge and Chrome cannot open folders inside Program Files (or Windows / AppData). Keep this app and the game outside them. If the game is in Steam\'s default library (C:\\Program Files (x86)\\Steam), move it in Steam: Properties → Installed Files → Move install folder.': '⚠ Edge y Chrome no pueden abrir carpetas dentro de Program Files (ni Windows / AppData). Mantén esta app y el juego fuera de ellas. Si el juego está en la biblioteca predeterminada de Steam (C:\\Program Files (x86)\\Steam), muévelo en Steam: Propiedades → Archivos instalados → Mover carpeta de instalación.',
+  '3D model': 'Modelo 3D',
+  'Recolour it': 'Recolorear',
+  'In its own colour': 'Con un color propio',
+  'This move has a 3D figure (a dragon, a giant …) besides its effects: it can keep its colour, take the move\'s colour or one of its own.': 'Esta técnica tiene una figura 3D (un dragón, un gigante …) además de los efectos: puede quedarse con su color original, tomar el color de la técnica o tener uno propio.',
+  'Other effects': 'Otros efectos',
+  'extra effect': 'efecto extra',
+  'The cut-in has other effects too ({names}): they can keep their colour, take the move\'s colour or one of their own.': 'La animación tiene otros efectos ({names}): pueden quedarse con su color original, tomar el color de la técnica o tener uno propio.',
   'Lighten': 'Aclarar',
   'Preview on the move\'s video: find «{en}» in the {site}, download its video and load it here.': 'Vista previa en el vídeo de la técnica: busca «{en}» en la {site}, descarga el vídeo y cárgalo aquí.',
   'Only a guide: the preview is not what you will see in the game. Here the whole video changes colour, the pitch and the players too; in the game only the move\'s effects change, and some of their parts can turn out lighter, darker or a little different.': 'Es solo una orientación: la vista previa no es lo que verás en el juego. Aquí cambia el color de todo el vídeo, también el campo y los jugadores; en el juego solo cambian los efectos de la técnica, y algunas partes pueden quedar más claras, más oscuras o un poco distintas.',
@@ -148,7 +200,7 @@ const ES = {
   'This folder has no VRFW: check it is the mods folder of the game you start with the mod launcher.': 'Esta carpeta no tiene VRFW: comprueba que es la carpeta mods del juego que abres con el launcher de mods.',
   'Folder connected, but it has no Inazuma Fantasy: the moves are made, but without its shop there is nowhere to buy them.': 'Carpeta conectada, pero no tiene Inazuma Fantasy: las técnicas se crean, pero sin su tienda no hay dónde comprarlas.',
   'Mods folder connected.': 'Carpeta mods conectada.',
-  'Mod generated in mods\\{mod} with {n} move(s). Switch «Technique Colours» on in the launcher; they are sold in Inazuma Fantasy\'s Technique Shop.': 'Mod generado en mods\\{mod} con {n} técnica(s). Activa «Technique Colours» en el launcher; se venden en la tienda de técnicas de Inazuma Fantasy.',
+  'Mod generated in mods\\{mod} with {n} move(s). Switch «{name}» on in the launcher; they are sold in Inazuma Fantasy\'s Technique Shop.': 'Mod generado en mods\\{mod} con {n} técnica(s). Activa «{name}» en el launcher; se venden en la tienda de técnicas de Inazuma Fantasy.',
   'Could not write: ': 'No se pudo escribir: ',
 };
 let LANG = 'en'; try { LANG = localStorage.getItem('techcolours-lang') || ((navigator.language || '').startsWith('pt') ? 'pt' : (navigator.language || '').startsWith('es') ? 'es' : 'en'); } catch (e) { /* default */ }
@@ -156,7 +208,11 @@ const esc = t => String(t).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;'
 const T = (s, p = {}) => ((LANG === 'pt' ? PT[s] : LANG === 'es' ? ES[s] : null) || s).replace(/\{(\w+)\}/g, (m, k) => k in p ? p[k] : m);
 
 const TECHS = /*TECHS*/[];
-const MOD = 'TechniqueColours', TAG = '# TECHCOLOURS ';
+// Several mods can be made with the app, each a folder of its own in mods: TechniqueColours (the first) and the ones the user
+// adds with «+ New». MOD is the one being worked on, state its state (kept in its mod.toml).
+const FIRST_MOD = 'TechniqueColours', TAG = '# TECHCOLOURS ';
+let MOD = FIRST_MOD, allMods = [];   // allMods: { folder, state } of every mod made with the app
+const modName = (m = { folder: MOD, state }) => m.state.name || (m.folder === FIRST_MOD ? 'Technique Colours' : m.folder);
 const LANGS = ['ja', 'en', 'es', 'fr', 'de', 'it', 'pt', 'zh_hans', 'zh_hant'];
 const EL = { fire:'#ff6a3d', forest:'#45c46a', wind:'#3fb8ff', mountain:'#c79a4a', void:'#9b6bff' };
 const ELN = el => T({ fire: 'Fire', forest: 'Forest', wind: 'Wind', mountain: 'Mountain', void: 'Void' }[el] || el || '');
@@ -182,7 +238,8 @@ function applyLang() {
   if (root) $('#where').textContent = T('Folder: {name}', { name: root.name });
   $('#pfwarn').hidden = !!root; $('#pfwarn').textContent = T('⚠ Edge and Chrome cannot open folders inside Program Files (or Windows / AppData). Keep this app and the game outside them. If the game is in Steam\'s default library (C:\\Program Files (x86)\\Steam), move it in Steam: Properties → Installed Files → Move install folder.');
   $('#yours').textContent = T('Your moves'); $('#write').textContent = T('Generate the mod');
-  $('#writehint').innerHTML = T('Writes <b>mods\\TechniqueColours</b>. Close the game first; then switch the mod on in the launcher.');
+  $('#writehint').innerHTML = T('Writes <b>mods\\{mod}</b>. Close the game first; then switch the mod on in the launcher.', { mod: MOD });
+  $('#modlbl').textContent = T('Mod'); $('#modnew').textContent = T('+ New'); $('#modren').textContent = T('Rename');
   $('#about').textContent = T('Each move is a copy of the original (same animation; the power and TP of the original or of the step you choose) with its effect in another colour and a name of your own; the original stays as it is. They are sold in Inazuma Fantasy\'s Technique Shop. The preview is an approximation: the real result is only seen in the game.');
   if (cur) open(cur.base, cur.edit); else $('#editor').innerHTML = `<div class="empty">${T('Choose on the left the original move you want in another colour.')}</div>`;
   renderList(); renderChanges();
@@ -230,13 +287,18 @@ function open(base, edit) {
       <label>${T('Name in the game')}</label><input id="tname" maxlength="40" style="${field}"><span></span>
       <label>${T('Price (tokens)')}</label><input id="tprice" type="number" min="0" max="9999" value="${p.price}" style="width:110px;${field}"><span></span>
       <label>${T('TP and power')}</label><select id="tier" style="width:auto"></select><span></span>
+      <label>${T('Font of the name')}</label><span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><select id="tfont" style="width:auto">${TELOP_FONTS.map(([id, n], i) => `<option value="${id}">${n}${i ? '' : ' ' + T('(default)')}</option>`).join('')}<option value="custom">${T('Your own font file…')}</option></select><button id="tfontfile" hidden>${T('Choose file…')}</button><span id="tfontname" class="hint"></span><input type="file" id="tfontin" accept=".ttf,.otf,.woff,.woff2" hidden></span><span></span>
       <label>${T('Element')}</label><select id="tel" style="width:auto">${['', 'fire', 'forest', 'wind', 'mountain', 'void'].map(e => `<option value="${e}" ${(p.element || '') === e ? 'selected' : ''}>${e ? ELN(e) : T('The original\'s ({el})', { el: ELN(base.el) })}</option>`).join('')}</select><span></span>
-      <label>${T('Colour')}</label><input type="color" id="col" value="${p.color}"><span></span>
+      <label>${T('Colour')}</label><span style="display:flex;gap:8px;align-items:center"><input type="color" id="col" value="${p.color}"><span class="hint" id="colhint"></span></span><span></span>
+      ${(TEX_GROUPS[base.k] || []).map((g, i) => { const v = groupsOf({ k: base.k, groups: p.groups })[i];
+        return `<label>${T('The {g} parts', { g: GROUP_NAME(g[0]) })}</label><span style="display:flex;gap:10px;align-items:center"><i class="dot" style="background:${hueSwatch(g[1])}"></i><select id="grp${i}mode" style="width:auto">${[['move', T('The move\'s colour')], ['own', T('A colour of their own')], ['orig', T('Keep the original')]].map(([m, l]) => `<option value="${m}" ${v.mode === m ? 'selected' : ''}>${l}</option>`).join('')}</select><input type="color" id="grp${i}col" value="${v.color || '#ff4fd8'}"><span class="hint">${g[2]}%</span></span><span></span>`; }).join('')}
       <label>${T('Saturation ×')}</label><input type="range" id="sat" min="0" max="2" step="0.01" value="${p.sat}"><span id="satv"></span>
       <label>${T('Brightness ×')}</label><input type="range" id="val" min="0" max="2" step="0.01" value="${p.val}"><span id="valv"></span>
       <label>${T('Lighten')}</label><input type="range" id="light" min="-0.5" max="0.5" step="0.01" value="${p.light || 0}"><span id="lightv"></span>
       <label>${T('Tint whites')}</label><input type="range" id="colz" min="0" max="1" step="0.01" value="${p.colorize}"><span id="colzv"></span>
       <label>${T('Keep whites')}</label><input type="checkbox" id="kw" ${p.keepWhites ? 'checked' : ''} style="justify-self:start"><span></span>
+      ${partRow('mdl', PROPS_ON && base.pr, p.model, p.color, T('3D model'), T('This move has a 3D figure (a dragon, a giant …) besides its effects: it can keep its colour, take the move\'s colour or one of its own.'))}
+      ${partRow('xtr', base.x, p.extra, p.color, T('Other effects'), T('The cut-in has other effects too ({names}): they can keep their colour, take the move\'s colour or one of their own.', { names: extraNames(base) }))}
     </div>
     <div class="hint">${T('The name in the cut-in (one picture for every language):')}</div>
     ${edit && !edit.key ? `<div class="status err" style="max-width:760px">${T('This move was made with an earlier version of the app and shows the original\'s name in the cut-in.')} <button id="givekey">${T('Use its own name')}</button> ${T('(the game sees it as another move: whoever bought it has to buy it again)')}</div>` : ''}
@@ -268,10 +330,17 @@ function open(base, edit) {
   let lit = !!(edit && edit.light);
   $('#light').addEventListener('input', () => { lit = true; });
   $('#col').addEventListener('input', () => { if (lit) return; const [, s, v] = hexToHsv($('#col').value); $('#light').value = s < 0.15 ? (v > 0.8 ? 0.25 : v < 0.25 ? -0.25 : 0) : 0; preview(); });
+  const groups = TEX_GROUPS[base.k] || [];
+  if (groups.length) $('#colhint').textContent = T('(this move has parts of {n} colours: below, each can keep the original or take another)', { n: groups.length });
+  groups.forEach((g, i) => { const sync = () => { $('#grp' + i + 'col').hidden = $('#grp' + i + 'mode').value !== 'own'; }; $('#grp' + i + 'mode').addEventListener('change', () => { sync(); preview(); }); $('#grp' + i + 'col').addEventListener('input', preview); sync(); });
   videoPreview(base);
+  for (const id of ['mdl', 'xtr']) if ($('#' + id)) { const sync = () => { $('#' + id + 'own').disabled = !$('#' + id).checked; $('#' + id + 'col').disabled = !$('#' + id).checked || !$('#' + id + 'own').checked; };
+    for (const x of [id, id + 'own']) $('#' + x).addEventListener('change', sync); sync(); }
   $('#apply').onclick = () => {
     const name = $('#tname').value.trim(); if (!name) { status(T('Give the move a name.'), 'err'); return; }
-    const v = { name, price: Math.max(0, Math.min(9999, Math.round(+$('#tprice').value || 0))), element: $('#tel').value, color: $('#col').value, sat: +$('#sat').value, val: +$('#val').value, colorize: +$('#colz').value, keepWhites: $('#kw').checked, light: +$('#light').value, ...strength() };
+    const v = { name, price: Math.max(0, Math.min(9999, Math.round(+$('#tprice').value || 0))), element: $('#tel').value, color: $('#col').value, sat: +$('#sat').value, val: +$('#val').value, colorize: +$('#colz').value, keepWhites: $('#kw').checked, light: +$('#light').value, font: $('#tfont').value === 'rum' ? undefined : $('#tfont').value, ...strength(),
+      model: partValue('mdl', PROPS_ON && base.pr), extra: partValue('xtr', base.x),
+      groups: groups.length ? groups.map((g, i) => ({ mode: $('#grp' + i + 'mode').value, color: $('#grp' + i + 'col').value })) : undefined };
     if (edit) Object.assign(edit, v);
     else { state.next++; state.techs.push({ n: state.next, id: `tc_${state.uid}_${state.next}`, key: base.k.slice(0, 3) + String(60000 + state.block * 500 + state.next % 500), k: base.k, en: base.en, obj: base.obj, ev: base.ev, fail: base.fail || null, ...v }); }
     renderChanges(); open(base, edit || state.techs.at(-1)); $('#write').disabled = !root;
@@ -286,9 +355,21 @@ function open(base, edit) {
     if (!confirm(T('Delete «{name}»? If a player has learned it, take it off them in the game first.', { name: edit.name }))) return;
     state.techs = state.techs.filter(x => x !== edit); cur = null; $('#editor').innerHTML = `<div class="empty">${T('Deleted. Choose another move on the left.')}</div>`; renderChanges();
   };
-  const telop = () => drawTelopK($('#telop'), $('#tname').value.trim() || ' ', $('#tel').value || base.el);
+  const telop = () => { const f = $('#tfont').value; document.fonts.load(`400 250px ${fontStack(f)}`).then(() => drawTelopK($('#telop'), $('#tname').value.trim() || ' ', $('#tel').value || base.el, f)); };
   for (const id of ['tname', 'tel']) $('#' + id).addEventListener('input', telop);
-  $('#col').addEventListener('input', telop); document.fonts.load(`400 250px 'TC Pointy'`).then(telop);
+  $('#col').addEventListener('input', telop);
+  // the font: one of the page's, or the user's own file (one for the whole mod: choosing another file changes it for every move that uses it)
+  $('#tfont').value = p.font || 'rum';
+  const fontUi = () => { const own = $('#tfont').value === 'custom'; $('#tfontfile').hidden = !own; $('#tfontname').textContent = own ? (customFont ? customFont.name : T('no file chosen yet')) : ''; };
+  $('#tfont').addEventListener('change', () => { fontUi(); telop(); if ($('#tfont').value === 'custom' && !customFont) $('#tfontin').click(); });
+  $('#tfontfile').onclick = () => $('#tfontin').click();
+  $('#tfontin').onchange = async () => {
+    const f = $('#tfontin').files[0]; $('#tfontin').value = ''; if (!f) return;
+    try { await useCustomFont(f.name, await f.arrayBuffer()); state.customFont = f.name; if (root) await writeAt(`${MOD}/${CUSTOM_FONT}`, customFont.data); status(T('Font «{name}» loaded. Every move that uses your own font takes it when you generate the mod.', { name: f.name }), 'ok'); }
+    catch (e) { console.error(e); status(T('«{name}» could not be read as a font (use a .ttf, .otf, .woff or .woff2 file).', { name: f.name }), 'err'); }
+    fontUi(); telop();
+  };
+  fontUi();
   preview(); renderList(); renderChanges(); telop();
 }
 
@@ -340,11 +421,22 @@ function drawTelop(c, text, element, family, weight = '400', squash = 0.9) {
   g.setTransform(1, 0, 0, 1, 0, 0); g.drawImage(L, 0, 0, c.width, c.height);
 }
 
-// the letters: Rum Raisin (SIL Open Font License 1.1, in this page), close to the game's banners; Japanese / Chinese letters
-// fall back to the system's
-const TELOP_FONT = "'TC Pointy', 'Yu Gothic UI', 'Meiryo', sans-serif";
-const drawTelopK = (c, text, element) => drawTelop(c, text, element, TELOP_FONT, '400', 1);
-const telopBlob = async (text, element) => { await document.fonts.load(`400 250px ${TELOP_FONT}`, text); await document.fonts.ready; const c = document.createElement('canvas'); c.width = TELOP_W; c.height = TELOP_H; drawTelop(c, text, element, TELOP_FONT, '400', 1); return new Promise(r => c.toBlob(r, 'image/png')); };
+// the letters: Rum Raisin by default (close to the game's banners), a few others of the same kind (all in this page: SIL Open Font
+// License 1.1, Chewy and Luckiest Guy Apache 2.0) or the user's own font file (one per mod, kept in the mod's app_data);
+// Japanese / Chinese letters fall back to the system's
+const TELOP_FONTS = [['rum', 'Rum Raisin', 'TC Pointy'], ['lilita', 'Lilita One', 'TC Lilita'], ['chewy', 'Chewy', 'TC Chewy'], ['spicy', 'Spicy Rice', 'TC Spicy'],
+  ['titan', 'Titan One', 'TC Titan'], ['bangers', 'Bangers', 'TC Bangers'], ['luckiest', 'Luckiest Guy', 'TC Luckiest']];
+const CUSTOM_FONT = 'app_data/custom_font';   // in the mod's folder: the bytes of the user's font file (its name is in state.customFont)
+let customFont = null;   // { name, data (ArrayBuffer) } once loaded
+const fontStack = id => `'${id === 'custom' && customFont ? 'TC Custom' : (TELOP_FONTS.find(f => f[0] === id) || TELOP_FONTS[0])[2]}', 'Yu Gothic UI', 'Meiryo', sans-serif`;
+async function useCustomFont(name, data) {
+  const face = new FontFace('TC Custom', data.slice(0));
+  await face.load();   // throws for a file that is not a font
+  for (const f of [...document.fonts]) if (f.family.replace(/["']/g, '') === 'TC Custom') document.fonts.delete(f);
+  document.fonts.add(face); customFont = { name, data };
+}
+const drawTelopK = (c, text, element, font) => drawTelop(c, text, element, fontStack(font), '400', 1);
+const telopBlob = async (text, element, font) => { const fam = fontStack(font); await document.fonts.load(`400 250px ${fam}`, text); await document.fonts.ready; const c = document.createElement('canvas'); c.width = TELOP_W; c.height = TELOP_H; drawTelop(c, text, element, fam, '400', 1); return new Promise(r => c.toBlob(r, 'image/png')); };
 
 // a flame-like sample
 function sample(c) {
@@ -361,6 +453,31 @@ function sample(c) {
 // an approximation of VRFW's set mode: hue set, saturation ×, value ×, greys raised to «colorize» saturation, whites kept
 // the colour's own saturation counts: a vivid colour (60 % or more) as chosen, a pale one less, white / grey / black none
 // (so white gives a colourless move instead of a red one: hue 0)
+// Recolouring the 3D figures (chr/_waza props): each copy also gets its own row in the game's model table (chara_model, through a
+// VRFW.character entry, as Inazuma Fantasy does for its recoloured giant), since the game finds a figure by its name there.
+const PROPS_ON = true;
+// Colour groups of a move's textures (src/data/texture_groups.json, from VRFW's copies with the original textures, by their
+// dominant hue): k -> [[name, hue, share %, [texture names after the object's]], …], the largest first; only moves with 2-3 groups.
+// Each group takes the move's colour, a colour of its own (per_texture) or keeps the original (left out of `textures`).
+const TEX_GROUPS = /*GROUPS*/{};
+const GROUP_NAME = g => T({ red: 'red', orange: 'orange', yellow: 'yellow', green: 'green', cyan: 'cyan', blue: 'blue', purple: 'purple', pink: 'pink' }[g] || g);
+// a move's saved groups: [{ mode: 'move' | 'own' | 'orig', color }] by group (the prototype's [{ on, color }] for the 2nd group on)
+const OLD_GROUP_HUES = { whs00950: [20, 205], whs00650: [285, 225] };
+function groupsOf(t) {
+  const gs = TEX_GROUPS[t.k] || [], saved = t.groups || [];
+  if (!saved.length || saved[0].mode) return gs.map((g, i) => saved[i] || { mode: 'move' });
+  const out = gs.map(() => ({ mode: 'move' }));   // prototype: match its groups to these by hue
+  saved.forEach((o, i) => { const h = (OLD_GROUP_HUES[t.k] || [])[i + 1]; if (h == null || !o.on) return;
+    let best = 0; gs.forEach((g, j) => { if (Math.abs(((g[1] - h + 540) % 360) - 180) < Math.abs(((gs[best][1] - h + 540) % 360) - 180)) best = j; });
+    out[best] = { mode: 'own', color: o.color }; });
+  return out;
+}
+const hueSwatch = h => `hsl(${h}, 90%, 55%)`;
+const CRC_TABLE = Array.from({ length: 256 }, (_, n) => { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; return c >>> 0; });
+const crc32 = str => { let c = 0xFFFFFFFF; for (const b of new TextEncoder().encode(str)) c = CRC_TABLE[(c ^ b) & 0xFF] ^ (c >>> 8); return ((c ^ 0xFFFFFFFF) >>> 0); };
+const hex32 = v => '0x' + v.toString(16).toUpperCase().padStart(8, '0');
+// a dark colour (navy, black …) darkens what it colours: a texture of its own has no «brightness», only hue / saturation / value
+const darkness = hex => { const v = hexToHsv(hex)[2]; return v >= 0.8 ? 1 : Math.max(0.12, v / 0.8); };
 const colourAmount = hex => Math.min(1, hexToHsv(hex)[1] / 0.6);
 const effective = () => { const ca = colourAmount($('#col').value);
   return { H: hexToHsv($('#col').value)[0], sat: +$('#sat').value * ca, val: +$('#val').value, colorize: +$('#colz').value * ca, kw: $('#kw').checked, light: +$('#light').value }; };
@@ -377,6 +494,19 @@ function preview() {
   }
   g.putImageData(img, 0, 0);
 }
+// ---------- the parts of a cut-in besides its main effect: its 3D props (chr/_waza) and its other effect objects. Each kind
+// can keep its colour, take the move's or have its own (the move's saturation, brightness and whites)
+const extraNames = base => [...new Set((base.x || []).map(o => o.includes('_') ? o.split('_').slice(1).join(' ') : T('extra effect')))].join(', ');
+function partRow(id, has, v, colour, label, hint) {
+  if (!has) return '';
+  v = v || {};
+  return `<label>${label}</label><span style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+        <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="${id}" ${v.on !== false ? 'checked' : ''}>${T('Recolour it')}</label>
+        <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="${id}own" ${v.own ? 'checked' : ''}>${T('In its own colour')}</label>
+        <input type="color" id="${id}col" value="${v.color || colour}"></span><span></span>
+      <span></span><span class="hint">${hint}</span><span></span>`;
+}
+const partValue = (id, has) => has ? { on: $('#' + id).checked, own: $('#' + id + 'own').checked, color: $('#' + id + 'col').value } : null;
 // ---------- the preview on the move's own video (the official encyclopedia's, loaded by the user): the same recolour as
 // above on every frame (WebGL); the slider shows the original on the left part. The video stays for the session, by move.
 const VIDEOS = {};
@@ -390,14 +520,20 @@ function videoPreview(base) {
   if (!gl) { status(T('This browser cannot show the video preview (no WebGL).'), 'err'); return; }
   c.hidden = false; $('#flame').hidden = true; $('#vplay').hidden = false; $('#vcmpl').hidden = false;
   const vs = 'attribute vec2 p; varying vec2 uv; void main() { uv = vec2(p.x * 0.5 + 0.5, 0.5 - p.y * 0.5); gl_Position = vec4(p, 0.0, 1.0); }';
-  const fs = `precision mediump float; varying vec2 uv; uniform sampler2D tex; uniform float H, sat, val, colz, kw, light, split;
+  const fs = `precision mediump float; varying vec2 uv; uniform sampler2D tex; uniform float H, sat, val, colz, kw, light, split; uniform vec4 G0, G1, G2;
     vec3 hsv(vec3 c) { vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0); vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));
       vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r)); float d = q.x - min(q.w, q.y);
       return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + 1e-10)), d / (q.x + 1e-10), q.x); }
     vec3 rgb(vec3 c) { vec3 p = abs(fract(c.xxx + vec3(1.0, 2.0 / 3.0, 1.0 / 3.0)) * 6.0 - 3.0); return c.z * mix(vec3(1.0), clamp(p - 1.0, 0.0, 1.0), c.y); }
     void main() { vec3 c = texture2D(tex, uv).rgb, o = c;
       if (uv.x >= split && !(kw > 0.5 && min(c.r, min(c.g, c.b)) >= 0.92)) { vec3 h = hsv(c);
-        o = clamp(rgb(vec3(H / 360.0, clamp(max(h.y * sat, colz), 0.0, 1.0), min(1.0, h.z * val))) + light, 0.0, 1.0); }
+        float hh = H / 360.0, gv = 1.0, gs = -1.0, keep = 0.0;
+        // a group (its original hue ±40°): w = 0 the move's colour, 1 + saturation its own colour, 3 the original
+        for (int k = 0; k < 3; k++) { vec4 G = k == 0 ? G0 : k == 1 ? G1 : G2;
+          if (G.w > 0.5 && h.y > 0.15 && abs(fract(h.x - G.x / 360.0 + 0.5) - 0.5) * 360.0 < 40.0) {
+            if (G.w > 2.5) keep = 1.0; else if (G.w > 0.9) { hh = G.y / 360.0; gv = G.z; gs = fract(G.w); } } }
+        o = keep > 0.5 ? c : gs >= 0.0 ? rgb(vec3(hh, clamp(h.y * gs * sat, 0.0, 1.0), min(1.0, h.z * val * gv)))
+                      : clamp(rgb(vec3(hh, clamp(max(h.y * sat, colz), 0.0, 1.0), min(1.0, h.z * val))) + light, 0.0, 1.0); }
       if (split > 0.0 && abs(uv.x - split) < 0.002) o = vec3(1.0);
       gl_FragColor = vec4(o, 1.0); }`;
   const sh = (t, src) => { const x = gl.createShader(t); gl.shaderSource(x, src); gl.compileShader(x); return x; };
@@ -418,6 +554,9 @@ function videoPreview(base) {
       const e = effective();
       gl.uniform1f(u('H'), e.H); gl.uniform1f(u('sat'), e.sat); gl.uniform1f(u('val'), e.val); gl.uniform1f(u('colz'), e.colorize);
       gl.uniform1f(u('kw'), e.kw ? 1 : 0); gl.uniform1f(u('light'), e.light); gl.uniform1f(u('split'), +$('#vcmp').value);
+      const gs = TEX_GROUPS[base.k] || [];
+      ['G0', 'G1', 'G2'].forEach((n, i) => { const g = gs[i], m = g && $('#grp' + i + 'mode') ? $('#grp' + i + 'mode').value : 'move', gc = m === 'own' ? $('#grp' + i + 'col').value : '#ffffff';
+        gl.uniform4f(u(n), g ? g[1] : 0, m === 'own' ? hexToHsv(gc)[0] : 0, darkness(gc), !g ? 0 : m === 'orig' ? 3 : m === 'own' ? 1 + Math.min(0.999, colourAmount(gc)) : 0); });
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }
     videoLoop = requestAnimationFrame(frame);
@@ -439,16 +578,60 @@ function renderChanges() {
 async function dirAt(parts, create) { let d = root; for (const p of parts) d = await d.getDirectoryHandle(p, { create }); return d; }
 async function writeAt(path, text) { const parts = path.split('/'), d = await dirAt(parts.slice(0, -1), true), f = await d.getFileHandle(parts.at(-1), { create: true }), w = await f.createWritable(); await w.write(text); await w.close(); }
 const tstr = s => JSON.stringify(String(s));
-async function load() {
-  try {
-    const f = await (await dirAt([MOD])).getFileHandle('mod.toml');
-    const line = (await (await f.getFile()).text()).split('\n').find(l => l.startsWith(TAG));
-    if (line) state = JSON.parse(line.slice(TAG.length));
-  } catch (e) { /* first use */ }
-  state.techs = state.techs || []; state.next = Math.max(state.next || 0, ...state.techs.map(t => t.n));
-  if (!state.uid) state.uid = newUid();
-  if (state.block == null) state.block = Math.floor(Math.random() * 40);
+// the state of a mod folder: the line kept in its mod.toml
+async function readState(folder) {
+  try { const f = await (await dirAt([folder])).getFileHandle('mod.toml'), line = (await (await f.getFile()).text()).split('\n').find(l => l.startsWith(TAG)); return line ? JSON.parse(line.slice(TAG.length)) : null; }
+  catch (e) { return null; }
 }
+// a block of ids of its own for each mod (its cut-ins, effect copies, banners: block * 500 + n)
+const freeBlock = () => { const used = new Set(allMods.map(m => m.state.block)); const free = [...Array(40).keys()].filter(b => !used.has(b)); return free.length ? free[Math.floor(Math.random() * free.length)] : Math.floor(Math.random() * 40); };
+const freeUid = () => { for (;;) { const u = newUid(); if (!allMods.some(m => m.state.uid === u)) return u; } };
+function fixState(st) {
+  st.techs = st.techs || []; st.next = Math.max(st.next || 0, ...st.techs.map(t => t.n));
+  if (!st.uid) st.uid = freeUid();
+  if (st.block == null) st.block = freeBlock();
+  return st;
+}
+async function loadMods() {
+  allMods = [];
+  const folders = []; for await (const [name, h] of root.entries()) if (h.kind === 'directory') folders.push(name);
+  for (const f of folders.sort()) { const st = await readState(f); if (st) allMods.push({ folder: f, state: st }); }
+  if (!allMods.length) allMods.push({ folder: FIRST_MOD, state: { next: 0, techs: [] } });
+  for (const m of allMods) fixState(m.state);
+  let want = null; try { want = localStorage.getItem('techcolours-mod'); } catch (e) { /* none */ }
+  await useMod(allMods.find(m => m.folder === want) || allMods.find(m => m.folder === FIRST_MOD) || allMods[0]);
+}
+// work on another mod: its moves, its own font
+async function useMod(m) {
+  MOD = m.folder; state = m.state; cur = null; customFont = null;
+  try { localStorage.setItem('techcolours-mod', MOD); } catch (e) { /* not remembered */ }
+  if (state.customFont) try { const f = await (await dirAt([MOD, ...CUSTOM_FONT.split('/').slice(0, -1)])).getFileHandle(CUSTOM_FONT.split('/').at(-1)); await useCustomFont(state.customFont, await (await f.getFile()).arrayBuffer()); } catch (e) { console.warn('own font', e); }
+  renderModPick(); applyLang();
+}
+function renderModPick() {
+  const sel = $('#modpick'); sel.textContent = '';
+  for (const m of allMods) { const o = document.createElement('option'); o.value = m.folder; o.textContent = modName(m); sel.append(o); }
+  sel.value = MOD; $('#modbar').hidden = !root;
+}
+$('#modpick').addEventListener('change', async () => {
+  const m = allMods.find(x => x.folder === $('#modpick').value); if (!m || m.folder === MOD) return;
+  await useMod(m); status(T('Working on «{mod}» (mods\\{folder}).', { mod: modName(), folder: MOD }), 'ok');
+});
+const folderFor = name => { let f = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/[^A-Za-z0-9]+/).filter(Boolean).map(w => w[0].toUpperCase() + w.slice(1)).join('').slice(0, 40); if (!/^[A-Za-z]/.test(f)) f = 'Moves' + f; return f; };
+$('#modnew').addEventListener('click', async () => {
+  if (!root) return;
+  const name = (prompt(T('Name of the new mod, as the launcher will show it (for example «Dark Moves»):')) || '').trim(); if (!name) return;
+  const taken = async f => { if (allMods.some(m => m.folder.toLowerCase() === f.toLowerCase())) return true; try { await dirAt([f]); return true; } catch (e) { return false; } };
+  let folder = folderFor(name), i = 2; while (await taken(folder)) folder = folderFor(name) + i++;
+  const m = { folder, state: fixState({ next: 0, techs: [], name }) }; allMods.push(m);
+  await useMod(m);
+  status(T('Mod «{name}» created: its moves go to mods\\{folder} when you click «Generate the mod». Switch it on in the launcher afterwards.', { name, folder }), 'ok');
+});
+$('#modren').addEventListener('click', () => {
+  const name = (prompt(T('New name of «{name}», as the launcher shows it:', { name: modName() }), modName()) || '').trim();
+  if (!name || name === modName()) return;
+  state.name = name; renderModPick(); status(T('Renamed (the folder stays mods\\{folder}). Click «Generate the mod» for the launcher to show it.', { folder: MOD }), 'ok');
+});
 $('#pick').onclick = async () => {
   try { root = await window.showDirectoryPicker({ id: 'techcolours-mods', mode: 'readwrite' }); } catch (e) { return; }
   let vrfw = true, fantasy = true;
@@ -458,7 +641,7 @@ $('#pick').onclick = async () => {
   if (!vrfw) status(T('This folder has no VRFW: check it is the mods folder of the game you start with the mod launcher.'), 'err');
   else if (!fantasy) status(T('Folder connected, but it has no Inazuma Fantasy: the moves are made, but without its shop there is nowhere to buy them.'), 'err');
   else status(T('Mods folder connected.'), 'ok');
-  await load(); renderChanges(); $('#write').disabled = false;
+  await loadMods(); renderChanges(); $('#write').disabled = false;
 };
 // the ids of a move's own cut-ins: ev<NN>_<5 digits> in the mod's block of 500 (50000-69999; the Fantasy uses 70000+ and 80000+)
 const evId = (t, fail) => { const n = 50000 + state.block * 500 + ((t.n * 2 + (fail ? 1 : 0)) % 500); return [t.ev.slice(0, 4), String(n)]; };
@@ -467,37 +650,74 @@ $('#write').onclick = async () => {
   try {
     const desc = 'Special moves recoloured with the Technique Colours app, sold in the Technique Shop.';
     const date = new Date().toISOString().slice(0, 10), num = x => (+x).toFixed(3);
-    await writeAt(`${MOD}/mod.toml`, `id = "${MOD}"\nname = "Technique Colours"\nversion = "1.0.${state.next}"\nauthor = "local"\ndescription = ${tstr(desc)}\npriority = 0\ntype = "content"\ntags = []\nupdated = "${date}"\nprefix = "${MOD}"\nfolder = "${MOD}"\nrequires = ["VRFW>=0.3.0"]\noptional = ["InazumaFantasy"]\nconflicts = []\n# starts switched OFF: turned on in the Mods screen\ndefault_enabled = false\n${TAG}${JSON.stringify(state)}\n`);
-    await writeAt(`${MOD}/text/keys.toml`, `schema = "VRFW.text_key/1"\ndefault_lang = "en"\n` + LANGS.map(l => `\n[${l}.new]\nmod_name = "Technique Colours"\nmod_description = ${tstr(desc)}\n`).join(''));
+    await writeAt(`${MOD}/mod.toml`, `id = "${MOD}"\nname = ${tstr(modName())}\nversion = "1.0.${state.next}"\nauthor = "local"\ndescription = ${tstr(desc)}\npriority = 0\ntype = "content"\ntags = []\nupdated = "${date}"\nprefix = "${MOD}"\nfolder = "${MOD}"\nrequires = ["VRFW>=0.3.0"]\noptional = ["InazumaFantasy"]\nconflicts = []\n# starts switched OFF: turned on in the Mods screen\ndefault_enabled = false\n${TAG}${JSON.stringify(state)}\n`);
+    await writeAt(`${MOD}/text/keys.toml`, `schema = "VRFW.text_key/1"\ndefault_lang = "en"\n` + LANGS.map(l => `\n[${l}.new]\nmod_name = ${tstr(modName())}\nmod_description = ${tstr(desc)}\n`).join(''));
     await writeAt(`${MOD}/changelog.toml`, `schema = "VRFW.changelog/1"\n\n[[release]]\nicon = "general"\nnotes = [\n    "Recoloured moves: ${state.techs.length}",\n]\n`);
     let anims = `schema = "VRFW.anim/2"\nowner = "match"\n# each move's own cut-in(s): a copy of the original's\n`;
     let fx = `schema = "VRFW.effect/1"\n# each move's effect object: a recoloured copy, loaded by its own cut-in(s)\n`;
     let tech = `schema = "VRFW.technique/3"\n# copies of the game's moves with their effect recoloured (power, TP and element: the original's unless written here)\n`;
     let shop = `schema = "VRFW.shop/2"\n\n[[edit]]\ntarget = "InazumaFantasy.technique_shop"\n`;
+    let chars = `schema = "VRFW.character/2"\ndefault_lang = "en"\n# each recoloured 3D figure's model row: the game finds a figure by its name in its model table (chara_model)\n`, nChars = 0;
     for (const t of state.techs) {
       const name = techName(t), evs = [[t.ev, false], ...(t.fail ? [[t.fail, true]] : [])].map(([from, fail]) => { const [pre, id] = evId(t, fail); return { from, fail, id: `${pre}_${id}`, stem: `${pre}${id}0`, name: name + (fail ? '_fail' : '') }; });
-      const stem = evs[0].stem, pre = t.ev.slice(0, 4);
-      fx += `\n# ${t.name} (from ${t.en}, ${t.k})\n[[recolor]]\nobject = "${t.obj}"\ncopy = "${stem}"\ntextures = "all"\nmaterials = "all"\nvertex_colors = "all"\nparticles = true\nhue = ${hexToHsv(t.color)[0].toFixed(1)}\nmode = "set"\nsaturation = ${num(t.sat * colourAmount(t.color))}\nvalue = ${num(t.val)}\ncolorize = ${num(t.colorize * colourAmount(t.color))}\n${t.light ? `brightness = ${num(t.light)}\n` : ''}${t.keepWhites !== false ? 'keep_whites = 0.92\n' : ''}`;
+      const stem = evs[0].stem, pre = t.ev.slice(0, 4), base = baseOf(t.k) || {};
+      // the effects' grey pixels stay as they are (mask_saturation): many effects use grey (and some coloured) textures as masks,
+      // not colours (the «ThresholdGrd» materials read a value there to pick a colour from a gradient: Royal Shield's walls got
+      // short or vanished when their grey noise was tinted); the 3D figures' grey parts take the colour as before
+      const colourOf = (hex, greys) => `hue = ${hexToHsv(hex)[0].toFixed(1)}\nmode = "set"\nsaturation = ${num(t.sat * colourAmount(hex))}\nvalue = ${num(t.val)}\ncolorize = ${num(t.colorize * colourAmount(hex))}\n${t.light ? `brightness = ${num(t.light)}\n` : ''}${t.keepWhites !== false ? 'keep_whites = 0.92\n' : ''}${greys ? '' : 'mask_saturation = [0.08, 1.0]\n'}`;
+      const colour = colourOf(t.color), model = t.model || {}, xtr = t.extra || {};
+      const modelColour = colourOf(model.own && model.color ? model.color : t.color, true), extraColour = colourOf(xtr.own && xtr.color ? xtr.color : t.color);
+      // its colour groups: the textures of a group kept original are left out; a group of its own colour: per_texture
+      const tg = TEX_GROUPS[t.k] || [], gm = groupsOf(t), kept = tg.filter((g, i) => gm[i].mode === 'orig');
+      const texSel = kept.length ? `[${tg.filter((g, i) => gm[i].mode !== 'orig').flatMap(g => g[3]).map(x => `"${t.obj}_${x}"`).join(', ')}]` : '"all"';
+      const mainKept = tg.length && gm[0].mode === 'orig';   // the main group kept: materials, vertex colours and particles (mostly its colour) stay too
+      fx += `\n# ${t.name} (from ${t.en}, ${t.k})\n[[recolor]]\nobject = "${t.obj}"\ncopy = "${stem}"\ntextures = ${texSel}\nmaterials = "${mainKept ? 'none' : 'all'}"\n${mainKept ? '' : 'vertex_colors = "all"\nparticles = true\n'}${colour}`;
+      tg.forEach((g, i) => { const own = gm[i]; if (own.mode !== 'own' || !own.color) return;
+        const [h] = hexToHsv(own.color), ca = colourAmount(own.color), dv = darkness(own.color);
+        for (const x of g[3]) fx += `  [recolor.per_texture."${t.obj}_${x}"]\n  hue = ${h.toFixed(1)}\n  saturation = ${num(t.sat * ca)}\n  value = ${num(t.val * dv)}\n`; });
+      // the cut-ins' other effect objects (ev60100901, ev60004100_wingfire …): copies named after the move's own stem
+      const extra = (xtr.on === false ? [] : base.x || []).map((o, i) => ({ o, copy: `${pre}${String(50000 + state.block * 500 + ((t.n * 4 + i) % 500))}${o.slice(9)}` }));   // the same length and ending
+      for (const x of extra) fx += `\n[[recolor]]\nobject = "${x.o}"\ncopy = "${x.copy}"\ntextures = "all"\nmaterials = "all"\nvertex_colors = "all"\nparticles = true\n${extraColour}`;
+      // the 3D props of the cut-ins (dragons, penguins, giants …: chr/_waza models): copies of the same length
+      const props = (model.on === false || !PROPS_ON ? [] : base.pr || []).map(([p, seats], i) => {
+        const n = 30000 + state.block * 500 + ((t.n * 4 + i) % 500);   // 3xxxx-4xxxx: apart from the cut-ins' own ids (5xxxx-6xxxx) and the game's
+        return { p, seats, copy: p.startsWith('ev') ? `${p.slice(0, 5)}${n}` : `${p[0]}${String(n * 10).slice(0, p.length - 1)}` };
+      });
+      // (a prop is named by its objbin path under common/: VRFW does not find it by its stem)
+      // (its textures and materials: the outline colour of some figures, as Majin Merge's, is in their materials; vertex colours stay)
+      for (const x of props) fx += `\n[[recolor]]\nobject = "chr/_waza/${x.p}/${x.p}.objbin"\ncopy = "${x.copy}"\ntextures = "all"\nmaterials = "all"\n${modelColour}`;
+      // and its row in the model table: the original's, with the copy's skeleton (objbin)
+      for (const x of props) { nChars++; chars += `\n[[character]]\nname = "model_${x.copy}"    # ${t.name}: ${x.p}\nbased_on = "${x.p}"\nbattle = false\n  [character.base]\n  id = ${hex32(crc32(x.copy))}\n  name = "${x.copy}"\n  [character.new_model]\n  id = ${hex32(crc32(x.copy + '_model'))}\n  from = "${x.p}"\n  [character.new_model.cells]\n  skeleton_path = "_waza/${x.copy}/${x.copy}.objbin"\n`; }
       for (const e of evs) {
         anims += `\n[[event]]\nname = "${e.name}"\nfrom = "${e.from}"\nid = "${e.id}"\n`;
         fx += `\n[[event_command]]\nevent = "${e.id}"\ncommand = "CMD_799A1EBA"                 # LOAD_ACTOR_RESOURCE\nargs = ["${t.obj}"]\nset = ["${t.obj}", "common/effect/event/${pre}/${stem}/${stem}.objbin"]\n`;
+        for (const x of extra) for (const a of [x.o, ...(/^ev\d{8}$/.test(x.o) ? [1, 2, 3, 4, 5, 6].map(k => `${x.o}_${k}`) : [])])
+          fx += `\n[[event_command]]\nevent = "${e.id}"\ncommand = "CMD_799A1EBA"\nargs = ["${a}"]\nset = ["${a}", "common/effect/event/${pre}/${x.copy}/${x.copy}.objbin"]\n`;
+        // the props are loaded in the cut-in's evt list (its eff list has only the effect objects)
+        for (const x of props) for (const [ev, seat] of x.seats) if (ev === e.from) {
+          const actor = `${x.p}_s${seat}_p<VARIATION>`;
+          fx += `\n[[event_command]]\nevent = "${e.id}"\nlist = "evt"\ncommand = "CMD_799A1EBA"\nargs = ["${actor}", "${x.p}"]\nset = ["${actor}", "${x.copy}"]\n`;
+        }
         // the copied cut-in loads the original's name banner: its own instead (the telop of the move's key)
         if (t.key) fx += `\n[[event_command]]\nevent = "${e.id}"\nlist = "evt"\ncommand = "CMD_D23AD08F"                 # TELOP_OBJ_LOAD\nset = ["soccer10_01_${t.key}"]\n`;
       }
       tech += `\n[[technique]]\nname = "${name}"\n${t.key ? `key = "${t.key}"\n` : ''}base = "${t.k}"\nmanual = true\nevent = "${MOD}.${evs[0].name}"\n${t.fail ? `fail_event = "${MOD}.${evs[1].name}"\n` : ''}${t.element ? `element = "${t.element}"\n` : ''}${strengthToml(t)}description_text = "base"\n` + LANGS.map(l => `  [technique.text.${l}]\n  name = ${tstr(t.name)}\n`).join('');
       shop += `\n  [[edit.entry]]\n  technique = "${MOD}.${name}"    # ${t.name}\n  price = ${t.price}\n  currency = "tk_bb000001"\n`;
     }
-    const files = { 'content/anims/technique_colours.toml': anims, 'content/effects/technique_colours.toml': fx, 'content/techniques/technique_colours.toml': tech, 'addons/InazumaFantasy/content/shops/technique_colours.toml': shop };
+    const files = { 'content/anims/technique_colours.toml': anims, 'content/effects/technique_colours.toml': fx, 'content/techniques/technique_colours.toml': tech, 'addons/InazumaFantasy/content/shops/technique_colours.toml': shop, 'content/characters/technique_colours_models.toml': nChars ? chars : '' };
     // the name banners: one picture per move (in every language), for the moves that have a key
     const withKey = state.techs.filter(t => t.key);
     files['content/telops/any/telops.toml'] = withKey.length ? `schema = "VRFW.telop_list/2"\n` + withKey.map(t => `\n[[telop]]\nid = "${t.key}"    # ${t.name}\nfrom = "${t.k}"\n`).join('') : '';
-    for (const t of withKey) await writeAt(`${MOD}/content/telops/any/${t.key}.png`, await telopBlob(t.name, t.element || (baseOf(t.k) || {}).el));
+    if (customFont) await writeAt(`${MOD}/${CUSTOM_FONT}`, customFont.data);
+    const noFont = withKey.filter(t => t.font === 'custom' && !customFont);
+    for (const t of withKey) await writeAt(`${MOD}/content/telops/any/${t.key}.png`, await telopBlob(t.name, t.element || (baseOf(t.k) || {}).el, t.font));
     try { const d = await dirAt([MOD, 'content', 'telops', 'any']), keep = new Set(withKey.map(t => t.key + '.png')), old = []; for await (const [n] of d.entries()) if (n.endsWith('.png') && !keep.has(n)) old.push(n); for (const n of old) await d.removeEntry(n); } catch (e) { /* none */ }
     for (const [p, text] of Object.entries(files)) {
       if (text && state.techs.length) await writeAt(`${MOD}/${p}`, text);
       else { try { const parts = p.split('/'); await (await dirAt([MOD, ...parts.slice(0, -1)])).removeEntry(parts.at(-1)); } catch (e) { /* not there */ } }
     }
-    status(T('Mod generated in mods\\{mod} with {n} move(s). Switch «Technique Colours» on in the launcher; they are sold in Inazuma Fantasy\'s Technique Shop.', { mod: MOD, n: state.techs.length }), 'ok');
+    status(T('Mod generated in mods\\{mod} with {n} move(s). Switch «{name}» on in the launcher; they are sold in Inazuma Fantasy\'s Technique Shop.', { mod: MOD, n: state.techs.length, name: modName() }), 'ok');
+    if (noFont.length) status(T('Mod generated, but your own font file is missing: {names} got the default font. Choose the file again in one of them and generate the mod.', { names: noFont.map(t => '«' + t.name + '»').join(', ') }), 'err');
   } catch (e) { console.error(e); status(T('Could not write: ') + e.message, 'err'); }
 };
 $('#search').addEventListener('input', renderList); $('#cat').addEventListener('change', renderList);

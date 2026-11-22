@@ -1,0 +1,9 @@
+Banner fonts embedded in the app (all from Google Fonts, through the fontsource packages, Latin letters only):
+
+- Rum Raisin (default) - Astigmatic - SIL Open Font License 1.1 (OFL.txt)
+- Lilita One - Juan Montoreano - SIL Open Font License 1.1 (LICENSE-LilitaOne.txt)
+- Chewy - Sideshow - Apache License 2.0 (LICENSE-Chewy.txt)
+- Spicy Rice - Astigmatic - SIL Open Font License 1.1 (LICENSE-SpicyRice.txt)
+- Titan One - Rodrigo Fuenzalida - SIL Open Font License 1.1 (LICENSE-TitanOne.txt)
+- Bangers - Vernon Adams - SIL Open Font License 1.1 (LICENSE-Bangers.txt)
+- Luckiest Guy - Astigmatic - Apache License 2.0 (LICENSE-LuckiestGuy.txt)
