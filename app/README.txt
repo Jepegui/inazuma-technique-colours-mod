@@ -1,4 +1,4 @@
-TECHNIQUE COLOURS 1.2 - recoloured special moves for Inazuma Fantasy
+TECHNIQUE COLOURS 1.3 - recoloured special moves for Inazuma Fantasy
 
   1. Unzip everything first (the app does not work from inside a zip),
      NOT inside the game's mods folder (the app is not a mod), nor inside

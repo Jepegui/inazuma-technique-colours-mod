@@ -75,6 +75,7 @@ h3 { margin:0 0 4px; font-size:15px; }
     <p class="hint" id="about"></p>
   </section>
 </main>
+<!--TOMLLIB-->
 <script>
 // ---------- the interface's languages: English, with Portuguese and Spanish (the key is the English text)
 const PT = {
@@ -103,7 +104,9 @@ const PT = {
   'The move\'s colour': 'A cor da técnica', 'Keep the original': 'Manter a original', '(this move has parts of {n} colours: below, each can keep the original or take another)': '(esta técnica tem partes de {n} cores: em baixo, cada uma pode manter a original ou ter outra)',
   'red': 'vermelhas', 'orange': 'laranja', 'yellow': 'amarelas', 'green': 'verdes', 'cyan': 'ciano', 'pink': 'rosa',
   'Name in the game': 'Nome no jogo', 'Price (tokens)': 'Preço (fichas)', 'Element': 'Elemento', 'The original\'s ({el})': 'O da original ({el})',
-  'Colour': 'Cor', 'Saturation ×': 'Saturação ×', 'Brightness ×': 'Brilho ×', 'Tint whites': 'Tingir brancos', 'Keep whites': 'Manter brancos',
+  'Colour': 'Cor', 'Saturation ×': 'Saturação ×', 'Brightness ×': 'Brilho ×', 'Tint whites': 'Tingir brancos', 'Keep whites': 'Manter brancos', 'Keep warm colours': 'Manter cores quentes', 'Shot trail': 'Rasto do remate',
+  'The effect around the ball while the shot flies (the game\'s one of its element).': 'O efeito à volta da bola enquanto o remate voa (o do jogo, do elemento da técnica).',
+  'Gold, yellow, orange and red parts keep their colour (golden glows, sparks); whites are not tinted then.': 'As partes douradas, amarelas, laranja e vermelhas ficam com a cor original (brilhos dourados, faíscas); os brancos deixam de ser tingidos.',
   'The name in the cut-in (one picture for every language):': 'O nome na animação (uma imagem para todas as línguas):',
   'This move was made with an earlier version of the app and shows the original\'s name in the cut-in.': 'Esta técnica foi criada numa versão anterior da app e mostra o nome da original na animação.',
   'Use its own name': 'Usar o nome próprio',
@@ -139,6 +142,7 @@ const PT = {
   'Mods folder connected.': 'Pasta mods ligada.',
   'Mod generated in mods\\{mod} with {n} move(s). Switch «{name}» on in the launcher; they are sold in Inazuma Fantasy\'s Technique Shop.': 'Mod gerado em mods\\{mod} com {n} técnica(s). Liga «{name}» no launcher; ficam à venda na loja de técnicas do Inazuma Fantasy.',
   'Could not write: ': 'Não foi possível escrever: ',
+  'Nothing was written: {file} came out wrong ({err}). Please tell the app\'s author.': 'Não se escreveu nada: o {file} saiu com um erro ({err}). Avisa o autor da app, por favor.',
 };
 const ES = {
   'New special moves in other colours, sold in Inazuma Fantasy\'s Technique Shop (needs VRFW)': 'Técnicas nuevas con otros colores, a la venta en la tienda de técnicas de Inazuma Fantasy (necesita VRFW)',
@@ -166,7 +170,9 @@ const ES = {
   'The move\'s colour': 'El color de la técnica', 'Keep the original': 'Mantener el original', '(this move has parts of {n} colours: below, each can keep the original or take another)': '(esta técnica tiene partes de {n} colores: abajo, cada una puede mantener el original o tener otro)',
   'red': 'rojas', 'orange': 'naranjas', 'yellow': 'amarillas', 'green': 'verdes', 'cyan': 'cian', 'pink': 'rosas',
   'Name in the game': 'Nombre en el juego', 'Price (tokens)': 'Precio (fichas)', 'Element': 'Elemento', 'The original\'s ({el})': 'El de la original ({el})',
-  'Colour': 'Color', 'Saturation ×': 'Saturación ×', 'Brightness ×': 'Brillo ×', 'Tint whites': 'Teñir blancos', 'Keep whites': 'Mantener blancos',
+  'Colour': 'Color', 'Saturation ×': 'Saturación ×', 'Brightness ×': 'Brillo ×', 'Tint whites': 'Teñir blancos', 'Keep whites': 'Mantener blancos', 'Keep warm colours': 'Mantener colores cálidos', 'Shot trail': 'Estela del tiro',
+  'The effect around the ball while the shot flies (the game\'s one of its element).': 'El efecto alrededor del balón mientras vuela el tiro (el del juego, del elemento de la técnica).',
+  'Gold, yellow, orange and red parts keep their colour (golden glows, sparks); whites are not tinted then.': 'Las partes doradas, amarillas, naranjas y rojas mantienen su color (brillos dorados, chispas); los blancos dejan de teñirse.',
   'The name in the cut-in (one picture for every language):': 'El nombre en la animación (una imagen para todos los idiomas):',
   'This move was made with an earlier version of the app and shows the original\'s name in the cut-in.': 'Esta técnica se creó con una versión anterior de la aplicación y muestra el nombre de la original en la animación.',
   'Use its own name': 'Usar su propio nombre',
@@ -202,6 +208,7 @@ const ES = {
   'Mods folder connected.': 'Carpeta mods conectada.',
   'Mod generated in mods\\{mod} with {n} move(s). Switch «{name}» on in the launcher; they are sold in Inazuma Fantasy\'s Technique Shop.': 'Mod generado en mods\\{mod} con {n} técnica(s). Activa «{name}» en el launcher; se venden en la tienda de técnicas de Inazuma Fantasy.',
   'Could not write: ': 'No se pudo escribir: ',
+  'Nothing was written: {file} came out wrong ({err}). Please tell the app\'s author.': 'No se escribió nada: {file} salió con un error ({err}). Avisa al autor de la app, por favor.',
 };
 let LANG = 'en'; try { LANG = localStorage.getItem('techcolours-lang') || ((navigator.language || '').startsWith('pt') ? 'pt' : (navigator.language || '').startsWith('es') ? 'es' : 'en'); } catch (e) { /* default */ }
 const esc = t => String(t).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]);
@@ -297,7 +304,9 @@ function open(base, edit) {
       <label>${T('Lighten')}</label><input type="range" id="light" min="-0.5" max="0.5" step="0.01" value="${p.light || 0}"><span id="lightv"></span>
       <label>${T('Tint whites')}</label><input type="range" id="colz" min="0" max="1" step="0.01" value="${p.colorize}"><span id="colzv"></span>
       <label>${T('Keep whites')}</label><input type="checkbox" id="kw" ${p.keepWhites ? 'checked' : ''} style="justify-self:start"><span></span>
+      <label>${T('Keep warm colours')}</label><span style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="kg" ${p.keepGold ? 'checked' : ''}><span class="hint">${T('Gold, yellow, orange and red parts keep their colour (golden glows, sparks); whites are not tinted then.')}</span></span><span></span>
       ${partRow('mdl', PROPS_ON && base.pr, p.model, p.color, T('3D model'), T('This move has a 3D figure (a dragon, a giant …) besides its effects: it can keep its colour, take the move\'s colour or one of its own.'))}
+      ${partRow('trl', base.cat === 'shoot', p.trail, p.color, T('Shot trail'), T('The effect around the ball while the shot flies (the game\'s one of its element).'))}
       ${partRow('xtr', base.x, p.extra, p.color, T('Other effects'), T('The cut-in has other effects too ({names}): they can keep their colour, take the move\'s colour or one of their own.', { names: extraNames(base) }))}
     </div>
     <div class="hint">${T('The name in the cut-in (one picture for every language):')}</div>
@@ -324,7 +333,7 @@ function open(base, edit) {
   $('#tname').value = edit ? edit.name : autoName();
   $('#tname').addEventListener('input', () => { named = true; });
   $('#col').addEventListener('input', () => { if (!named) $('#tname').value = autoName(); });
-  for (const id of ['col', 'sat', 'val', 'colz', 'kw', 'light']) $('#' + id).addEventListener('input', preview);
+  for (const id of ['col', 'sat', 'val', 'colz', 'kw', 'kg', 'light']) $('#' + id).addEventListener('input', preview);
   // a white, grey or black colour: no hue to give, so the move loses its colour; a light one is also lightened
   // (the slider stays the user's once moved)
   let lit = !!(edit && edit.light);
@@ -334,12 +343,12 @@ function open(base, edit) {
   if (groups.length) $('#colhint').textContent = T('(this move has parts of {n} colours: below, each can keep the original or take another)', { n: groups.length });
   groups.forEach((g, i) => { const sync = () => { $('#grp' + i + 'col').hidden = $('#grp' + i + 'mode').value !== 'own'; }; $('#grp' + i + 'mode').addEventListener('change', () => { sync(); preview(); }); $('#grp' + i + 'col').addEventListener('input', preview); sync(); });
   videoPreview(base);
-  for (const id of ['mdl', 'xtr']) if ($('#' + id)) { const sync = () => { $('#' + id + 'own').disabled = !$('#' + id).checked; $('#' + id + 'col').disabled = !$('#' + id).checked || !$('#' + id + 'own').checked; };
+  for (const id of ['mdl', 'xtr', 'trl']) if ($('#' + id)) { const sync = () => { $('#' + id + 'own').disabled = !$('#' + id).checked; $('#' + id + 'col').disabled = !$('#' + id).checked || !$('#' + id + 'own').checked; };
     for (const x of [id, id + 'own']) $('#' + x).addEventListener('change', sync); sync(); }
   $('#apply').onclick = () => {
     const name = $('#tname').value.trim(); if (!name) { status(T('Give the move a name.'), 'err'); return; }
-    const v = { name, price: Math.max(0, Math.min(9999, Math.round(+$('#tprice').value || 0))), element: $('#tel').value, color: $('#col').value, sat: +$('#sat').value, val: +$('#val').value, colorize: +$('#colz').value, keepWhites: $('#kw').checked, light: +$('#light').value, font: $('#tfont').value === 'rum' ? undefined : $('#tfont').value, ...strength(),
-      model: partValue('mdl', PROPS_ON && base.pr), extra: partValue('xtr', base.x),
+    const v = { name, price: Math.max(0, Math.min(9999, Math.round(+$('#tprice').value || 0))), element: $('#tel').value, color: $('#col').value, sat: +$('#sat').value, val: +$('#val').value, colorize: +$('#colz').value, keepWhites: $('#kw').checked, keepGold: $('#kg').checked || undefined, light: +$('#light').value, font: $('#tfont').value === 'rum' ? undefined : $('#tfont').value, ...strength(),
+      model: partValue('mdl', PROPS_ON && base.pr), extra: partValue('xtr', base.x), trail: partValue('trl', base.cat === 'shoot') || undefined,
       groups: groups.length ? groups.map((g, i) => ({ mode: $('#grp' + i + 'mode').value, color: $('#grp' + i + 'col').value })) : undefined };
     if (edit) Object.assign(edit, v);
     else { state.next++; state.techs.push({ n: state.next, id: `tc_${state.uid}_${state.next}`, key: base.k.slice(0, 3) + String(60000 + state.block * 500 + state.next % 500), k: base.k, en: base.en, obj: base.obj, ev: base.ev, fail: base.fail || null, ...v }); }
@@ -478,9 +487,13 @@ const crc32 = str => { let c = 0xFFFFFFFF; for (const b of new TextEncoder().enc
 const hex32 = v => '0x' + v.toString(16).toUpperCase().padStart(8, '0');
 // a dark colour (navy, black …) darkens what it colours: a texture of its own has no «brightness», only hue / saturation / value
 const darkness = hex => { const v = hexToHsv(hex)[2]; return v >= 0.8 ? 1 : Math.max(0.12, v / 0.8); };
+// «keep warm colours»: VRFW's mask_hue = [70, 330] changes only the hues from 70° to 330° (greys count as 0°: kept too)
+const WARM = [70, 330];
+const warmChanges = (r, g, b) => { const mx = Math.max(r, g, b), d = mx - Math.min(r, g, b); if (d <= 0) return false;
+  let h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h = (h * 60 + 360) % 360; return h >= WARM[0] && h <= WARM[1]; };
 const colourAmount = hex => Math.min(1, hexToHsv(hex)[1] / 0.6);
 const effective = () => { const ca = colourAmount($('#col').value);
-  return { H: hexToHsv($('#col').value)[0], sat: +$('#sat').value * ca, val: +$('#val').value, colorize: +$('#colz').value * ca, kw: $('#kw').checked, light: +$('#light').value }; };
+  return { H: hexToHsv($('#col').value)[0], sat: +$('#sat').value * ca, val: +$('#val').value, colorize: +$('#colz').value * ca, kw: $('#kw').checked, kg: $('#kg').checked, light: +$('#light').value }; };
 function preview() {
   const v = { color: $('#col').value, ...effective() };
   $('#satv').textContent = (+$('#sat').value).toFixed(2); $('#valv').textContent = v.val.toFixed(2); $('#colzv').textContent = (+$('#colz').value).toFixed(2); $('#lightv').textContent = v.light.toFixed(2);
@@ -489,6 +502,7 @@ function preview() {
   for (let i = 0; i < d.length; i += 4) {
     const r = d[i] / 255, gg = d[i + 1] / 255, bb = d[i + 2] / 255;
     if (v.kw && Math.min(r, gg, bb) >= 0.92) continue;
+    if (v.kg && !warmChanges(r, gg, bb)) continue;
     const [, s, val] = rgbToHsv(r, gg, bb), rgb = hsvToRgb(H, Math.min(1, Math.max(s * v.sat, v.colorize)), Math.min(1, val * v.val));
     for (let k = 0; k < 3; k++) d[i + k] = Math.round(Math.max(0, Math.min(1, rgb[k] + v.light)) * 255);
   }
@@ -520,13 +534,14 @@ function videoPreview(base) {
   if (!gl) { status(T('This browser cannot show the video preview (no WebGL).'), 'err'); return; }
   c.hidden = false; $('#flame').hidden = true; $('#vplay').hidden = false; $('#vcmpl').hidden = false;
   const vs = 'attribute vec2 p; varying vec2 uv; void main() { uv = vec2(p.x * 0.5 + 0.5, 0.5 - p.y * 0.5); gl_Position = vec4(p, 0.0, 1.0); }';
-  const fs = `precision mediump float; varying vec2 uv; uniform sampler2D tex; uniform float H, sat, val, colz, kw, light, split; uniform vec4 G0, G1, G2;
+  const fs = `precision mediump float; varying vec2 uv; uniform sampler2D tex; uniform float H, sat, val, colz, kw, kg, light, split; uniform vec4 G0, G1, G2;
     vec3 hsv(vec3 c) { vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0); vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));
       vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r)); float d = q.x - min(q.w, q.y);
       return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + 1e-10)), d / (q.x + 1e-10), q.x); }
     vec3 rgb(vec3 c) { vec3 p = abs(fract(c.xxx + vec3(1.0, 2.0 / 3.0, 1.0 / 3.0)) * 6.0 - 3.0); return c.z * mix(vec3(1.0), clamp(p - 1.0, 0.0, 1.0), c.y); }
     void main() { vec3 c = texture2D(tex, uv).rgb, o = c;
-      if (uv.x >= split && !(kw > 0.5 && min(c.r, min(c.g, c.b)) >= 0.92)) { vec3 h = hsv(c);
+      vec3 h0 = hsv(c); bool warm = kg > 0.5 && (h0.y < 1e-4 || h0.x * 360.0 < 70.0 || h0.x * 360.0 > 330.0);
+      if (uv.x >= split && !warm && !(kw > 0.5 && min(c.r, min(c.g, c.b)) >= 0.92)) { vec3 h = h0;
         float hh = H / 360.0, gv = 1.0, gs = -1.0, keep = 0.0;
         // a group (its original hue ±40°): w = 0 the move's colour, 1 + saturation its own colour, 3 the original
         for (int k = 0; k < 3; k++) { vec4 G = k == 0 ? G0 : k == 1 ? G1 : G2;
@@ -553,7 +568,7 @@ function videoPreview(base) {
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, v);
       const e = effective();
       gl.uniform1f(u('H'), e.H); gl.uniform1f(u('sat'), e.sat); gl.uniform1f(u('val'), e.val); gl.uniform1f(u('colz'), e.colorize);
-      gl.uniform1f(u('kw'), e.kw ? 1 : 0); gl.uniform1f(u('light'), e.light); gl.uniform1f(u('split'), +$('#vcmp').value);
+      gl.uniform1f(u('kw'), e.kw ? 1 : 0); gl.uniform1f(u('kg'), e.kg ? 1 : 0); gl.uniform1f(u('light'), e.light); gl.uniform1f(u('split'), +$('#vcmp').value);
       const gs = TEX_GROUPS[base.k] || [];
       ['G0', 'G1', 'G2'].forEach((n, i) => { const g = gs[i], m = g && $('#grp' + i + 'mode') ? $('#grp' + i + 'mode').value : 'move', gc = m === 'own' ? $('#grp' + i + 'col').value : '#ffffff';
         gl.uniform4f(u(n), g ? g[1] : 0, m === 'own' ? hexToHsv(gc)[0] : 0, darkness(gc), !g ? 0 : m === 'orig' ? 3 : m === 'own' ? 1 + Math.min(0.999, colourAmount(gc)) : 0); });
@@ -643,16 +658,24 @@ $('#pick').onclick = async () => {
   else status(T('Mods folder connected.'), 'ok');
   await loadMods(); renderChanges(); $('#write').disabled = false;
 };
+// the first file that is not valid TOML: { file, err }, or null
+const tomlError = files => {
+  for (const [file, text] of Object.entries(files)) { if (!text) continue; try { TOML.parse(text); } catch (e) { return { file, err: String(e.message).split('\n')[0] }; } }
+  return null;
+};
 // the ids of a move's own cut-ins: ev<NN>_<5 digits> in the mod's block of 500 (50000-69999; the Fantasy uses 70000+ and 80000+)
+// the letter of the game's shot trails (ega0075a-e) by element
+const TRAIL_LETTER = { mountain: 'a', wind: 'b', fire: 'c', forest: 'd', void: 'e' };
 const evId = (t, fail) => { const n = 50000 + state.block * 500 + ((t.n * 2 + (fail ? 1 : 0)) % 500); return [t.ev.slice(0, 4), String(n)]; };
 $('#write').onclick = async () => {
   if (!root) return;
   try {
     const desc = 'Special moves recoloured with the Technique Colours app, sold in the Technique Shop.';
     const date = new Date().toISOString().slice(0, 10), num = x => (+x).toFixed(3);
-    await writeAt(`${MOD}/mod.toml`, `id = "${MOD}"\nname = ${tstr(modName())}\nversion = "1.0.${state.next}"\nauthor = "local"\ndescription = ${tstr(desc)}\npriority = 0\ntype = "content"\ntags = []\nupdated = "${date}"\nprefix = "${MOD}"\nfolder = "${MOD}"\nrequires = ["VRFW>=0.3.0"]\noptional = ["InazumaFantasy"]\nconflicts = []\n# starts switched OFF: turned on in the Mods screen\ndefault_enabled = false\n${TAG}${JSON.stringify(state)}\n`);
-    await writeAt(`${MOD}/text/keys.toml`, `schema = "VRFW.text_key/1"\ndefault_lang = "en"\n` + LANGS.map(l => `\n[${l}.new]\nmod_name = ${tstr(modName())}\nmod_description = ${tstr(desc)}\n`).join(''));
-    await writeAt(`${MOD}/changelog.toml`, `schema = "VRFW.changelog/1"\n\n[[release]]\nicon = "general"\nnotes = [\n    "Recoloured moves: ${state.techs.length}",\n]\n`);
+    const head = {};   // the mod's own files: written with the others, once they are all checked
+    head['mod.toml'] = (`id = "${MOD}"\nname = ${tstr(modName())}\nversion = "1.0.${state.next}"\nauthor = "local"\ndescription = ${tstr(desc)}\npriority = 0\ntype = "content"\ntags = []\nupdated = "${date}"\nprefix = "${MOD}"\nfolder = "${MOD}"\nrequires = ["VRFW>=0.3.0"]\noptional = ["InazumaFantasy"]\nconflicts = []\n# starts switched OFF: turned on in the Mods screen\ndefault_enabled = false\n${TAG}${JSON.stringify(state)}\n`);
+    head['text/keys.toml'] = (`schema = "VRFW.text_key/1"\ndefault_lang = "en"\n` + LANGS.map(l => `\n[${l}.new]\nmod_name = ${tstr(modName())}\nmod_description = ${tstr(desc)}\n`).join(''));
+    head['changelog.toml'] = (`schema = "VRFW.changelog/1"\n\n[[release]]\nicon = "general"\nnotes = [\n    "Recoloured moves: ${state.techs.length}",\n]\n`);
     let anims = `schema = "VRFW.anim/2"\nowner = "match"\n# each move's own cut-in(s): a copy of the original's\n`;
     let fx = `schema = "VRFW.effect/1"\n# each move's effect object: a recoloured copy, loaded by its own cut-in(s)\n`;
     let tech = `schema = "VRFW.technique/3"\n# copies of the game's moves with their effect recoloured (power, TP and element: the original's unless written here)\n`;
@@ -664,7 +687,7 @@ $('#write').onclick = async () => {
       // the effects' grey pixels stay as they are (mask_saturation): many effects use grey (and some coloured) textures as masks,
       // not colours (the «ThresholdGrd» materials read a value there to pick a colour from a gradient: Royal Shield's walls got
       // short or vanished when their grey noise was tinted); the 3D figures' grey parts take the colour as before
-      const colourOf = (hex, greys) => `hue = ${hexToHsv(hex)[0].toFixed(1)}\nmode = "set"\nsaturation = ${num(t.sat * colourAmount(hex))}\nvalue = ${num(t.val)}\ncolorize = ${num(t.colorize * colourAmount(hex))}\n${t.light ? `brightness = ${num(t.light)}\n` : ''}${t.keepWhites !== false ? 'keep_whites = 0.92\n' : ''}${greys ? '' : 'mask_saturation = [0.08, 1.0]\n'}`;
+      const colourOf = (hex, greys) => `hue = ${hexToHsv(hex)[0].toFixed(1)}\nmode = "set"\nsaturation = ${num(t.sat * colourAmount(hex))}\nvalue = ${num(t.val)}\ncolorize = ${num(t.colorize * colourAmount(hex))}\n${t.light ? `brightness = ${num(t.light)}\n` : ''}${t.keepWhites !== false ? 'keep_whites = 0.92\n' : ''}${t.keepGold ? `mask_hue = [${WARM[0]}.0, ${WARM[1]}.0]\n` : ''}${greys ? '' : 'mask_saturation = [0.08, 1.0]\n'}`;
       const colour = colourOf(t.color), model = t.model || {}, xtr = t.extra || {};
       const modelColour = colourOf(model.own && model.color ? model.color : t.color, true), extraColour = colourOf(xtr.own && xtr.color ? xtr.color : t.color);
       // its colour groups: the textures of a group kept original are left out; a group of its own colour: per_texture
@@ -701,13 +724,27 @@ $('#write').onclick = async () => {
         // the copied cut-in loads the original's name banner: its own instead (the telop of the move's key)
         if (t.key) fx += `\n[[event_command]]\nevent = "${e.id}"\nlist = "evt"\ncommand = "CMD_D23AD08F"                 # TELOP_OBJ_LOAD\nset = ["soccer10_01_${t.key}"]\n`;
       }
+      // its shot trail: the game's trail of the move's element (pooled effect ega0075<letter>, chosen by the CB_ShootBallAura row)
+      // recoloured into a copy, and a [[shot_aura]] rule that gives it to this move only (by its key)
+      const trl = t.trail || {};
+      if (t.key && base.cat === 'shoot' && trl.on !== false) {
+        const letter = TRAIL_LETTER[t.element || base.el] || 'e', like = `ega0075${letter}`;
+        const copy = `egz${String(state.block * 250 + t.n % 250).padStart(4, '0')}${letter}`;   // the same length (8)
+        fx += `\n# ${t.name}: its shot trail (the game's ${like}), recoloured\n[[recolor]]\nobject = "${like}"\ncopy = "${copy}"\ntextures = "all"\nmaterials = "all"\nvertex_colors = "all"\nparticles = true\n${colourOf(trl.own && trl.color ? trl.color : t.color)}`;
+        fx += `\n[[effect]]\nname = "${name}_trail"\nfrom = "${like}"\nobject = "${copy}"\n`;
+        fx += `\n[[shot_aura]]\nname = "${name}_trail"\nwhen = { techniques = ["${t.key}"] }\naura = "${name}_trail"\nlike = "${like}"\n`;
+      }
       tech += `\n[[technique]]\nname = "${name}"\n${t.key ? `key = "${t.key}"\n` : ''}base = "${t.k}"\nmanual = true\nevent = "${MOD}.${evs[0].name}"\n${t.fail ? `fail_event = "${MOD}.${evs[1].name}"\n` : ''}${t.element ? `element = "${t.element}"\n` : ''}${strengthToml(t)}description_text = "base"\n` + LANGS.map(l => `  [technique.text.${l}]\n  name = ${tstr(t.name)}\n`).join('');
       shop += `\n  [[edit.entry]]\n  technique = "${MOD}.${name}"    # ${t.name}\n  price = ${t.price}\n  currency = "tk_bb000001"\n`;
     }
-    const files = { 'content/anims/technique_colours.toml': anims, 'content/effects/technique_colours.toml': fx, 'content/techniques/technique_colours.toml': tech, 'addons/InazumaFantasy/content/shops/technique_colours.toml': shop, 'content/characters/technique_colours_models.toml': nChars ? chars : '' };
+    const files = { 'content/anims/technique_colours.toml': anims, 'content/effects/technique_colours.toml': fx, 'content/techniques/technique_colours.toml': tech, 'addons/InazumaFantasy/content/shops/technique_colours.toml': shop, 'content/characters/technique_colours_models.toml': nChars ? chars : '', 'addons/InazumaStrikers/content/effects/technique_colours_shots.toml': '', 'addons/InazumaStrikers/content/techniques/technique_colours_shots.toml': '' };
     // the name banners: one picture per move (in every language), for the moves that have a key
     const withKey = state.techs.filter(t => t.key);
     files['content/telops/any/telops.toml'] = withKey.length ? `schema = "VRFW.telop_list/2"\n` + withKey.map(t => `\n[[telop]]\nid = "${t.key}"    # ${t.name}\nfrom = "${t.k}"\n`).join('') : '';
+    // every file is checked before anything is written: one wrong line and VRFW refuses the whole file
+    const bad = tomlError({ ...head, ...files });
+    if (bad) { console.error(bad); status(T('Nothing was written: {file} came out wrong ({err}). Please tell the app\'s author.', bad), 'err'); return; }
+    for (const [p, text] of Object.entries(head)) await writeAt(`${MOD}/${p}`, text);
     if (customFont) await writeAt(`${MOD}/${CUSTOM_FONT}`, customFont.data);
     const noFont = withKey.filter(t => t.font === 'custom' && !customFont);
     for (const t of withKey) await writeAt(`${MOD}/content/telops/any/${t.key}.png`, await telopBlob(t.name, t.element || (baseOf(t.k) || {}).el, t.font));
