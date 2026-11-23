@@ -1,4 +1,4 @@
-TECHNIQUE COLOURS 1.3 - recoloured special moves for Inazuma Fantasy
+TECHNIQUE COLOURS 2.0 - recoloured special moves for Inazuma Fantasy
 
   1. Unzip everything first (the app does not work from inside a zip),
      NOT inside the game's mods folder (the app is not a mod), nor inside
@@ -13,6 +13,13 @@ TECHNIQUE COLOURS 1.3 - recoloured special moves for Inazuma Fantasy
   5. With the game closed, click "Generate the mod", then switch on
      "Technique Colours" in the launcher. Your moves are in Inazuma Fantasy's
      Technique Shop.
+  6. Keshins and totems: click "Choose the folder of the keshin and totem
+     files" (under the mods folder) and choose the "pack" folder that came
+     in the zip (the game's files of each keshin and totem). Then, in the
+     "Keshins & totems" tab, choose one, its colours, name and price, and
+     click "Create". "Customise its move" gives its move colours, a name and
+     TP / power of its own. They are sold in the Training Shop. The Armed
+     armour needs Character Reforged.
 
   - The app only writes inside mods\TechniqueColours (and the mods you make
     with "+ New"). Nothing leaves your computer.

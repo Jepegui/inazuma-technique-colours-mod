@@ -1,4 +1,4 @@
-TECHNIQUE COLOURS 1.3 - técnicas recoloreadas para Inazuma Fantasy
+TECHNIQUE COLOURS 2.0 - técnicas recoloreadas para Inazuma Fantasy
 
   1. Descomprime todo primero (la aplicación no funciona desde dentro de un zip),
      PERO NO dentro de la carpeta mods del juego (la aplicación no es un mod)
@@ -12,6 +12,13 @@ TECHNIQUE COLOURS 1.3 - técnicas recoloreadas para Inazuma Fantasy
      técnica, descárgalo de https://zukan.inazuma.jp/en/skill/ y cárgalo en la app.
   5. Con el juego cerrado, pulsa "Generar el mod" y activa "Technique Colours"
      en el launcher. Tus técnicas están en la tienda de técnicas de Inazuma Fantasy.
+  6. Keshins y tótems: pulsa "Elegir la carpeta de los archivos de keshins y
+     tótems" (debajo de la carpeta mods) y elige la carpeta "pack" que viene
+     en el zip (los archivos del juego de cada keshin y tótem). Después, en la
+     pestaña "Keshins & totems", elige una, los colores, el nombre y el precio
+     y pulsa "Crear". "Personalizar la técnica" da a su técnica colores, nombre
+     y PT / potencia propios. Se venden en la Training Shop. La armadura del
+     Armed necesita Character Reforged.
 
   - La aplicación solo escribe dentro de mods\TechniqueColours (y de los mods
     que crees con "+ Nuevo"). Nada sale de tu ordenador.

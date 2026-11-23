@@ -46,6 +46,7 @@ canvas { border-radius:10px; border:1px solid var(--line); max-width:100%; }
 h3 { margin:0 0 4px; font-size:15px; }
 .empty { color:var(--dim); text-align:center; margin:auto; }
   a { color: #7cc4ff; }
+  .tabs { display:grid; grid-template-columns:1fr 1fr; gap:6px; } .tabs button.on { border-color:var(--acc); color:var(--acc); }
   .vwarn { max-width: 760px; padding: 10px 14px; border-radius: 8px; border: 1px solid #f5b301; background: rgba(245, 179, 1, .12); color: #ffd666; font-weight: 600; }
 </style>
 </head>
@@ -55,8 +56,10 @@ h3 { margin:0 0 4px; font-size:15px; }
   <aside class="panel">
     <button id="pick" class="primary"></button>
     <div id="where" class="hint"></div>
+    <div id="packbar" style="display:flex;flex-direction:column;gap:4px"><span style="display:flex;gap:6px;flex-wrap:wrap"><button id="packpick"></button><button id="packother" hidden></button></span><div id="packwhere" class="hint"></div><div id="packwarn" class="vwarn" hidden></div></div>
     <div class="modbar" id="modbar" hidden><label><span id="modlbl"></span><select id="modpick"></select></label><button id="modnew"></button><button id="modren"></button></div>
     <div id="pfwarn" class="vwarn"></div>
+    <div class="tabs"><button id="tabmoves" class="on"></button><button id="tabspirits"></button></div>
     <input id="search" type="search">
     <select id="cat"></select>
     <div id="list"></div>
@@ -76,6 +79,7 @@ h3 { margin:0 0 4px; font-size:15px; }
   </section>
 </main>
 <!--TOMLLIB-->
+<!--CODEC-->
 <script>
 // ---------- the interface's languages: English, with Portuguese and Spanish (the key is the English text)
 const PT = {
@@ -227,6 +231,7 @@ const CATN = c => T({ shoot: 'Shot', dribble: 'Dribble', block: 'Block', catch: 
 const $ = s => document.querySelector(s);
 // state: kept in the mod. `n` never comes back (a save remembers a bought move by its name); the cut-in ids are the mod's own block
 const newUid = () => 'abcdefghijkmnpqrstuvwxyz'[Math.floor(Math.random() * 24)] + Math.random().toString(36).slice(2, 5).padEnd(3, '0');
+let MODE = 'moves';   // the list on the left: the game's moves, or its keshins and totems (spirits.js)
 let root = null, state = { next: 0, uid: newUid(), block: Math.floor(Math.random() * 40), techs: [] }, cur = null;   // cur = { base, edit (a tech of state) or null }
 // a move's internal name: what a save remembers as bought, so it never comes back (the mod's random id in it: a mod folder
 // deleted and made again starts other names)
@@ -240,20 +245,24 @@ function applyLang() {
   document.documentElement.lang = LANG; $('#lang').value = LANG;
   $('#sub').textContent = T('New special moves in other colours, sold in Inazuma Fantasy\'s Technique Shop (needs VRFW)');
   $('#pick').textContent = T('Choose the game\'s mods folder…');
-  $('#search').placeholder = T('Search the original move…');
+  $('#search').placeholder = MODE === 'spirits' ? T('Search the keshin or totem…') : T('Search the original move…');
+  $('#tabmoves').textContent = T('Moves'); $('#tabspirits').textContent = T('Keshins & totems'); $('#cat').hidden = MODE === 'spirits';
   const c = $('#cat').value; $('#cat').innerHTML = [['', 'All'], ['shoot', 'Shots'], ['dribble', 'Dribbles'], ['block', 'Blocks'], ['catch', 'Saves (goalkeeper)']].map(([v, l]) => `<option value="${v}">${T(l)}</option>`).join(''); $('#cat').value = c;
   if (root) $('#where').textContent = T('Folder: {name}', { name: root.name });
   $('#pfwarn').hidden = !!root; $('#pfwarn').textContent = T('⚠ Edge and Chrome cannot open folders inside Program Files (or Windows / AppData). Keep this app and the game outside them. If the game is in Steam\'s default library (C:\\Program Files (x86)\\Steam), move it in Steam: Properties → Installed Files → Move install folder.');
-  $('#yours').textContent = T('Your moves'); $('#write').textContent = T('Generate the mod');
+  $('#yours').textContent = MODE === 'spirits' ? T('Your keshins and totems') : T('Your moves'); $('#write').textContent = T('Generate the mod');
   $('#writehint').innerHTML = T('Writes <b>mods\\{mod}</b>. Close the game first; then switch the mod on in the launcher.', { mod: MOD });
   $('#modlbl').textContent = T('Mod'); $('#modnew').textContent = T('+ New'); $('#modren').textContent = T('Rename');
   $('#about').textContent = T('Each move is a copy of the original (same animation; the power and TP of the original or of the step you choose) with its effect in another colour and a name of your own; the original stays as it is. They are sold in Inazuma Fantasy\'s Technique Shop. The preview is an approximation: the real result is only seen in the game.');
-  if (cur) open(cur.base, cur.edit); else $('#editor').innerHTML = `<div class="empty">${T('Choose on the left the original move you want in another colour.')}</div>`;
+  if (typeof packUi === 'function') packUi();
+  if (MODE === 'spirits') { if (MODE_SPIRIT) openSpirit(MODE_SPIRIT.o, MODE_SPIRIT.edit); else $('#editor').innerHTML = `<div class="empty">${T('Choose on the left the keshin or totem you want in other colours.')}</div>`; }
+  else if (cur) open(cur.base, cur.edit); else $('#editor').innerHTML = `<div class="empty">${T('Choose on the left the original move you want in another colour.')}</div>`;
   renderList(); renderChanges();
 }
 $('#lang').addEventListener('change', () => { LANG = $('#lang').value; try { localStorage.setItem('techcolours-lang', LANG); } catch (e) { /* not kept */ } applyLang(); });
 
 function renderList() {
+  if (MODE === 'spirits') return renderSpiritList();
   const q = $('#search').value.trim().toLowerCase(), c = $('#cat').value, list = $('#list'); list.textContent = '';
   const hit = TECHS.filter(t => (!c || t.cat === c) && (!q || [t.pt, t.en, t.es, t.k].some(x => x && x.toLowerCase().includes(q)))).slice(0, 300);
   for (const t of hit) {
@@ -285,17 +294,19 @@ const HUES = [0, 25, 50, 70, 100, 140, 175, 200, 225, 255, 280, 310, 335, 360];
 const colourName = hex => { const w = COLOUR_WORDS[LANG] || COLOUR_WORDS.en, [h, s, v] = hexToHsv(hex); if (v < 0.2) return w[13]; if (s < 0.15) return v > 0.8 ? w[14] : w[15];
   const i = HUES.reduce((a, b, j) => Math.abs(b - h) < Math.abs(HUES[a] - h) ? j : a, 0); return w[i === 13 ? 0 : i]; };
 
-function open(base, edit) {
+function open(base, edit, forSpirit) {
+  // a keshin's or totem's own move: tied to it (not sold), its cut-in shows the copy of the keshin
+  const sp = spiritOfMove(edit) || forSpirit || null;
   cur = { base, edit };
   const p = edit ? { ...edit } : { name: '', price: 10, element: '', color: '#3fa2ff', sat: 1, val: 1, colorize: 0.3, keepWhites: true, light: 0 };
   const ed = $('#editor'), field = 'background:#0b1120;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit';
   ed.innerHTML = `<h3></h3><p class="hint" id="meta"></p>
     <div class="grid">
       <label>${T('Name in the game')}</label><input id="tname" maxlength="40" style="${field}"><span></span>
-      <label>${T('Price (tokens)')}</label><input id="tprice" type="number" min="0" max="9999" value="${p.price}" style="width:110px;${field}"><span></span>
+      ${sp ? '' : `<label>${T('Price (tokens)')}</label><input id="tprice" type="number" min="0" max="9999" value="${p.price}" style="width:110px;${field}"><span></span>`}
       <label>${T('TP and power')}</label><select id="tier" style="width:auto"></select><span></span>
       <label>${T('Font of the name')}</label><span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><select id="tfont" style="width:auto">${TELOP_FONTS.map(([id, n], i) => `<option value="${id}">${n}${i ? '' : ' ' + T('(default)')}</option>`).join('')}<option value="custom">${T('Your own font file…')}</option></select><button id="tfontfile" hidden>${T('Choose file…')}</button><span id="tfontname" class="hint"></span><input type="file" id="tfontin" accept=".ttf,.otf,.woff,.woff2" hidden></span><span></span>
-      <label>${T('Element')}</label><select id="tel" style="width:auto">${['', 'fire', 'forest', 'wind', 'mountain', 'void'].map(e => `<option value="${e}" ${(p.element || '') === e ? 'selected' : ''}>${e ? ELN(e) : T('The original\'s ({el})', { el: ELN(base.el) })}</option>`).join('')}</select><span></span>
+      <label>${T('Element')}</label><select id="tel" style="width:auto">${['', 'fire', 'forest', 'wind', 'mountain', 'void'].map(e => `<option value="${e}" ${(p.element || '') === e ? 'selected' : ''}>${e ? ELN(e) : sp && spiritEl(sp) ? T('The keshin\'s ({el})', { el: ELN(spiritEl(sp)) }) : T('The original\'s ({el})', { el: ELN(base.el) })}</option>`).join('')}</select><span></span>
       <label>${T('Colour')}</label><span style="display:flex;gap:8px;align-items:center"><input type="color" id="col" value="${p.color}"><span class="hint" id="colhint"></span></span><span></span>
       ${(TEX_GROUPS[base.k] || []).map((g, i) => { const v = groupsOf({ k: base.k, groups: p.groups })[i];
         return `<label>${T('The {g} parts', { g: GROUP_NAME(g[0]) })}</label><span style="display:flex;gap:10px;align-items:center"><i class="dot" style="background:${hueSwatch(g[1])}"></i><select id="grp${i}mode" style="width:auto">${[['move', T('The move\'s colour')], ['own', T('A colour of their own')], ['orig', T('Keep the original')]].map(([m, l]) => `<option value="${m}" ${v.mode === m ? 'selected' : ''}>${l}</option>`).join('')}</select><input type="color" id="grp${i}col" value="${v.color || '#ff4fd8'}"><span class="hint">${g[2]}%</span></span><span></span>`; }).join('')}
@@ -319,15 +330,19 @@ function open(base, edit) {
     <canvas id="vcan" width="640" height="360" hidden style="max-width:100%;border-radius:8px;background:#000"></canvas>
     <div id="flame"><div class="hint">${T('Preview on a sample flame (approximate):')}</div>
     <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><canvas id="before" width="360" height="200"></canvas><span style="color:var(--dim)">→</span><canvas id="after" width="360" height="200"></canvas></div></div>
-    <div style="display:flex;gap:10px"><button id="apply" class="primary">${edit ? T('Save') : T('Create move')}</button>${edit ? `<button id="drop" class="danger">${T('Delete')}</button>` : ''}</div>`;
+    <div style="display:flex;gap:10px"><button id="apply" class="primary">${edit ? T('Save') : T('Create move')}</button>${edit ? `<button id="drop" class="danger">${sp ? T('Back to the original move') : T('Delete')}</button>` : ''}${sp ? `<button id="toSpirit">${T('Back to «{s}»', { s: esc(sp.s.name) })}</button>` : ''}</div>`;
   ed.querySelector('h3').textContent = edit ? edit.name : T('New version of {name}', { name: nameOf(base) });
-  $('#meta').textContent = T('{cat} · based on {name} ({en}, {k})', { cat: CATN(base.cat), name: nameOf(base), en: base.en, k: base.k });
+  $('#meta').textContent = T('{cat} · based on {name} ({en}, {k})', { cat: CATN(base.cat), name: nameOf(base), en: base.en, k: base.k })
+    + (sp ? ' · ' + T('the move of «{s}» (not sold: it comes with the keshin or totem)', { s: sp.s.name }) : '');
   // TP and power: the original's, or one step of the game's own scale (TP -> power at level 1, the highest level follows)
-  const own = TIERS.find(([tp, pw]) => tp === base.tp && pw[0] === (base.pw || [])[0]);
+  const tiers = sp ? SPIRIT_TIERS : TIERS;
+  const own = tiers.find(([tp, pw]) => tp === base.tp && pw[0] === (base.pw || [])[0]);
   $('#tier').innerHTML = (own ? '' : `<option value="">${T('The original\'s ({tp} TP, power {pw})', { tp: base.tp ?? '?', pw: (base.pw || ['?'])[0] })}</option>`)
-    + TIERS.map(([tp, pw]) => `<option value="${tp}">${T('{tp} TP · power {pw}', { tp, pw: pw[0] })}${own && own[0] === tp ? ' ' + T('(the original\'s)') : ''}</option>`).join('');
-  $('#tier').value = p.tier ? String(p.tier) : own ? String(own[0]) : '';
-  var strength = () => { const v = +$('#tier').value; return { tier: v && !(own && own[0] === v) ? v : null, pw: null, tp: null }; };
+    + tiers.map(([tp, pw]) => `<option value="${tp}">${T('{tp} TP · power {pw}', { tp, pw: pw[0] })}${own && own[0] === tp ? ' ' + T('(the original\'s)') : ''}</option>`).join('');
+  $('#tier').value = sp ? (p.tp ? String(p.tp) : own ? String(own[0]) : '') : p.tier ? String(p.tier) : own ? String(own[0]) : '';
+  var strength = () => { const v = +$('#tier').value;
+    if (sp) { const st = v && !(own && own[0] === v) && SPIRIT_TIERS.find(([tp]) => tp === v); return { tier: null, tp: st ? st[0] : null, pw: st ? st[1] : null }; }
+    return { tier: v && !(own && own[0] === v) ? v : null, pw: null, tp: null }; };
   const autoName = () => LANG === 'en' ? `${colourName($('#col').value)} ${nameOf(base)}` : `${nameOf(base)} ${colourName($('#col').value)}`;
   let named = !!edit;
   $('#tname').value = edit ? edit.name : autoName();
@@ -347,11 +362,11 @@ function open(base, edit) {
     for (const x of [id, id + 'own']) $('#' + x).addEventListener('change', sync); sync(); }
   $('#apply').onclick = () => {
     const name = $('#tname').value.trim(); if (!name) { status(T('Give the move a name.'), 'err'); return; }
-    const v = { name, price: Math.max(0, Math.min(9999, Math.round(+$('#tprice').value || 0))), element: $('#tel').value, color: $('#col').value, sat: +$('#sat').value, val: +$('#val').value, colorize: +$('#colz').value, keepWhites: $('#kw').checked, keepGold: $('#kg').checked || undefined, light: +$('#light').value, font: $('#tfont').value === 'rum' ? undefined : $('#tfont').value, ...strength(),
+    const v = { name, price: sp ? 0 : Math.max(0, Math.min(9999, Math.round(+$('#tprice').value || 0))), element: $('#tel').value, color: $('#col').value, sat: +$('#sat').value, val: +$('#val').value, colorize: +$('#colz').value, keepWhites: $('#kw').checked, keepGold: $('#kg').checked || undefined, light: +$('#light').value, font: $('#tfont').value === 'rum' ? undefined : $('#tfont').value, ...strength(),
       model: partValue('mdl', PROPS_ON && base.pr), extra: partValue('xtr', base.x), trail: partValue('trl', base.cat === 'shoot') || undefined,
       groups: groups.length ? groups.map((g, i) => ({ mode: $('#grp' + i + 'mode').value, color: $('#grp' + i + 'col').value })) : undefined };
     if (edit) Object.assign(edit, v);
-    else { state.next++; state.techs.push({ n: state.next, id: `tc_${state.uid}_${state.next}`, key: base.k.slice(0, 3) + String(60000 + state.block * 500 + state.next % 500), k: base.k, en: base.en, obj: base.obj, ev: base.ev, fail: base.fail || null, ...v }); }
+    else { state.next++; state.techs.push({ n: state.next, id: `tc_${state.uid}_${state.next}`, key: base.k.slice(0, 3) + String(60000 + state.block * 500 + state.next % 500), k: base.k, en: base.en, obj: base.obj, ev: base.ev, fail: base.fail || null, ...(sp ? { spirit: sp.s.n } : {}), ...v }); }
     renderChanges(); open(base, edit || state.techs.at(-1)); $('#write').disabled = !root;
     status(edit ? T('Saved. Click «Generate the mod» for the game to see the changes.') : T('«{name}» created. Click «Generate the mod» when you are done.', { name }), 'ok');
   };
@@ -360,11 +375,12 @@ function open(base, edit) {
     state.next++; edit.id = `tc_${state.uid}_${state.next}`; edit.key = base.k.slice(0, 3) + String(60000 + state.block * 500 + state.next % 500);
     open(base, edit); status(T('Done. Click «Generate the mod».'), 'ok');
   };
+  if (sp) $('#toSpirit').onclick = () => { setMode('spirits'); openSpirit(sp.o, sp.s); };
   if (edit) $('#drop').onclick = () => {
     if (!confirm(T('Delete «{name}»? If a player has learned it, take it off them in the game first.', { name: edit.name }))) return;
     state.techs = state.techs.filter(x => x !== edit); cur = null; $('#editor').innerHTML = `<div class="empty">${T('Deleted. Choose another move on the left.')}</div>`; renderChanges();
   };
-  const telop = () => { const f = $('#tfont').value; document.fonts.load(`400 250px ${fontStack(f)}`).then(() => drawTelopK($('#telop'), $('#tname').value.trim() || ' ', $('#tel').value || base.el, f)); };
+  const telop = () => { const f = $('#tfont').value; document.fonts.load(`400 250px ${fontStack(f)}`).then(() => drawTelopK($('#telop'), $('#tname').value.trim() || ' ', $('#tel').value || (sp && spiritEl(sp)) || base.el, f)); };
   for (const id of ['tname', 'tel']) $('#' + id).addEventListener('input', telop);
   $('#col').addEventListener('input', telop);
   // the font: one of the page's, or the user's own file (one for the whole mod: choosing another file changes it for every move that uses it)
@@ -579,12 +595,14 @@ function videoPreview(base) {
   v.play().catch(() => {}).finally(playLabel); frame();
 }
 function renderChanges() {
+  if (MODE === 'spirits') return renderSpiritChanges();
   const box = $('#changes'); box.textContent = '';
   if (!state.techs.length) { box.innerHTML = `<span class="hint">${T('None yet.')}</span>`; return; }
   for (const c of state.techs) {
     const r = document.createElement('div'); r.className = 'row' + (cur && cur.edit === c ? ' on' : ''); r.style.cursor = 'pointer';
     r.innerHTML = `<span><i class="dot" style="background:${c.color}"></i></span><small></small>`;
-    r.firstChild.append(c.name); r.lastChild.textContent = T('{price} tokens · {el} · from {en}', { price: c.price, el: ELN(c.element || (baseOf(c.k) || {}).el), en: c.en });
+    const csp = spiritOfMove(c);
+    r.firstChild.append(c.name); r.lastChild.textContent = csp ? T('{el} · from {en} · the move of «{s}»', { el: ELN(moveEl(c)), en: c.en, s: csp.s.name }) : T('{price} tokens · {el} · from {en}', { price: c.price, el: ELN(c.element || (baseOf(c.k) || {}).el), en: c.en });
     r.onclick = () => { const t = baseOf(c.k); if (t) open(t, c); };
     box.append(r);
   }
@@ -602,7 +620,7 @@ async function readState(folder) {
 const freeBlock = () => { const used = new Set(allMods.map(m => m.state.block)); const free = [...Array(40).keys()].filter(b => !used.has(b)); return free.length ? free[Math.floor(Math.random() * free.length)] : Math.floor(Math.random() * 40); };
 const freeUid = () => { for (;;) { const u = newUid(); if (!allMods.some(m => m.state.uid === u)) return u; } };
 function fixState(st) {
-  st.techs = st.techs || []; st.next = Math.max(st.next || 0, ...st.techs.map(t => t.n));
+  st.techs = st.techs || []; st.spirits = st.spirits || []; st.next = Math.max(st.next || 0, ...st.techs.map(t => t.n));
   if (!st.uid) st.uid = freeUid();
   if (st.block == null) st.block = freeBlock();
   return st;
@@ -618,7 +636,7 @@ async function loadMods() {
 }
 // work on another mod: its moves, its own font
 async function useMod(m) {
-  MOD = m.folder; state = m.state; cur = null; customFont = null;
+  MOD = m.folder; state = m.state; cur = null; if (typeof MODE_SPIRIT !== 'undefined') MODE_SPIRIT = null; customFont = null;
   try { localStorage.setItem('techcolours-mod', MOD); } catch (e) { /* not remembered */ }
   if (state.customFont) try { const f = await (await dirAt([MOD, ...CUSTOM_FONT.split('/').slice(0, -1)])).getFileHandle(CUSTOM_FONT.split('/').at(-1)); await useCustomFont(state.customFont, await (await f.getFile()).arrayBuffer()); } catch (e) { console.warn('own font', e); }
   renderModPick(); applyLang();
@@ -656,7 +674,7 @@ $('#pick').onclick = async () => {
   if (!vrfw) status(T('This folder has no VRFW: check it is the mods folder of the game you start with the mod launcher.'), 'err');
   else if (!fantasy) status(T('Folder connected, but it has no Inazuma Fantasy: the moves are made, but without its shop there is nowhere to buy them.'), 'err');
   else status(T('Mods folder connected.'), 'ok');
-  await loadMods(); renderChanges(); $('#write').disabled = false;
+  await loadMods(); await loadCrRows(); renderChanges(); $('#write').disabled = false;
 };
 // the first file that is not valid TOML: { file, err }, or null
 const tomlError = files => {
@@ -665,25 +683,34 @@ const tomlError = files => {
 };
 // the ids of a move's own cut-ins: ev<NN>_<5 digits> in the mod's block of 500 (50000-69999; the Fantasy uses 70000+ and 80000+)
 // the letter of the game's shot trails (ega0075a-e) by element
+// moves with no name banner of their own in the game (variants named after another move: VRFW said so of whs03410), and the
+// moves whose banner gives the format instead (ones Inazuma Fantasy uses as `from`)
+const TELOP_NONE = new Set(['whs03410', 'whs00770', 'whs02750', 'whs03290', 'whk00530', 'whk00850']);
+const TELOP_LIKE = { whs: 'whs10160', whd: 'whd10110', whk: 'whk01550', who: 'who00540' };
 const TRAIL_LETTER = { mountain: 'a', wind: 'b', fire: 'c', forest: 'd', void: 'e' };
 const evId = (t, fail) => { const n = 50000 + state.block * 500 + ((t.n * 2 + (fail ? 1 : 0)) % 500); return [t.ev.slice(0, 4), String(n)]; };
 $('#write').onclick = async () => {
   if (!root) return;
+  if (state.spirits && state.spirits.length && !packIndex && !confirm(T('The folder of the keshin and totem files is not connected: your {n} keshin(s)/totem(s) will not be written (the ones written before stay as they were). Generate the mod anyway?', { n: state.spirits.length }))) { packFlash(); return; }
   try {
     const desc = 'Special moves recoloured with the Technique Colours app, sold in the Technique Shop.';
     const date = new Date().toISOString().slice(0, 10), num = x => (+x).toFixed(3);
     const head = {};   // the mod's own files: written with the others, once they are all checked
-    head['mod.toml'] = (`id = "${MOD}"\nname = ${tstr(modName())}\nversion = "1.0.${state.next}"\nauthor = "local"\ndescription = ${tstr(desc)}\npriority = 0\ntype = "content"\ntags = []\nupdated = "${date}"\nprefix = "${MOD}"\nfolder = "${MOD}"\nrequires = ["VRFW>=0.3.0"]\noptional = ["InazumaFantasy"]\nconflicts = []\n# starts switched OFF: turned on in the Mods screen\ndefault_enabled = false\n${TAG}${JSON.stringify(state)}\n`);
+    head['mod.toml'] = (`id = "${MOD}"\nname = ${tstr(modName())}\nversion = "1.0.${state.next}"\nauthor = "local"\ndescription = ${tstr(desc)}\npriority = 0\ntype = "content"\ntags = []\nupdated = "${date}"\nprefix = "${MOD}"\nfolder = "${MOD}"\nrequires = ["VRFW>=0.3.0"]\noptional = ["InazumaFantasy", "CharacterReforged"]\nconflicts = []\n# starts switched OFF: turned on in the Mods screen\ndefault_enabled = false\n${TAG}${JSON.stringify(state)}\n`);
     head['text/keys.toml'] = (`schema = "VRFW.text_key/1"\ndefault_lang = "en"\n` + LANGS.map(l => `\n[${l}.new]\nmod_name = ${tstr(modName())}\nmod_description = ${tstr(desc)}\n`).join(''));
-    head['changelog.toml'] = (`schema = "VRFW.changelog/1"\n\n[[release]]\nicon = "general"\nnotes = [\n    "Recoloured moves: ${state.techs.length}",\n]\n`);
+    head['changelog.toml'] = (`schema = "VRFW.changelog/1"\n\n[[release]]\nicon = "general"\nnotes = [\n    "Recoloured moves: ${state.techs.length}",\n    "Recoloured keshins and totems: ${state.spirits.length}",\n]\n`);
     let anims = `schema = "VRFW.anim/2"\nowner = "match"\n# each move's own cut-in(s): a copy of the original's\n`;
     let fx = `schema = "VRFW.effect/1"\n# each move's effect object: a recoloured copy, loaded by its own cut-in(s)\n`;
     let tech = `schema = "VRFW.technique/3"\n# copies of the game's moves with their effect recoloured (power, TP and element: the original's unless written here)\n`;
     let shop = `schema = "VRFW.shop/2"\n\n[[edit]]\ntarget = "InazumaFantasy.technique_shop"\n`;
+    let moveEnv = '';   // the keshins' and totems' own moves: their cut-ins' tag words
     let chars = `schema = "VRFW.character/2"\ndefault_lang = "en"\n# each recoloured 3D figure's model row: the game finds a figure by its name in its model table (chara_model)\n`, nChars = 0;
     for (const t of state.techs) {
       const name = techName(t), evs = [[t.ev, false], ...(t.fail ? [[t.fail, true]] : [])].map(([from, fail]) => { const [pre, id] = evId(t, fail); return { from, fail, id: `${pre}_${id}`, stem: `${pre}${id}0`, name: name + (fail ? '_fail' : '') }; });
       const stem = evs[0].stem, pre = t.ev.slice(0, 4), base = baseOf(t.k) || {};
+      // a keshin's or totem's own move: its cut-in keeps the copy of the keshin (assigned, or the fixed one swapped)
+      const msp = spiritOfMove(t), mcode = msp && spiritCode(msp.s, msp.o), mfixed = msp && SPIRIT_FIXED.has(msp.o.lk), mM = msp && spiritModel(msp.o);
+      if (t.spirit && !msp) continue;   // its keshin was deleted
       // the effects' grey pixels stay as they are (mask_saturation): many effects use grey (and some coloured) textures as masks,
       // not colours (the «ThresholdGrd» materials read a value there to pick a colour from a gradient: Royal Shield's walls got
       // short or vanished when their grey noise was tinted); the 3D figures' grey parts take the colour as before
@@ -712,7 +739,9 @@ $('#write').onclick = async () => {
       // and its row in the model table: the original's, with the copy's skeleton (objbin)
       for (const x of props) { nChars++; chars += `\n[[character]]\nname = "model_${x.copy}"    # ${t.name}: ${x.p}\nbased_on = "${x.p}"\nbattle = false\n  [character.base]\n  id = ${hex32(crc32(x.copy))}\n  name = "${x.copy}"\n  [character.new_model]\n  id = ${hex32(crc32(x.copy + '_model'))}\n  from = "${x.p}"\n  [character.new_model.cells]\n  skeleton_path = "_waza/${x.copy}/${x.copy}.objbin"\n`; }
       for (const e of evs) {
-        anims += `\n[[event]]\nname = "${e.name}"\nfrom = "${e.from}"\nid = "${e.id}"\n`;
+        anims += `\n[[event]]\nname = "${e.name}"\nfrom = "${e.from}"\nid = "${e.id}"\n${msp && !mfixed ? `assigned = ["${mcode}"]    # ${msp.s.name}\n` : ''}`;
+        if (msp && mfixed) fx += `\n[[event_command]]\nevent = "${e.id}"    # ${msp.s.name} in the cut-in\nlist = "evt"\ncommand = "CMD_799A1EBA"                 # LOAD_ACTOR_RESOURCE\nargs = ["${mM}_s00_p<VARIATION>", "${mM}"]\nset = ["${mM}_s00_p<VARIATION>", "${mcode}"]\n`;
+        if (msp && !mfixed) moveEnv += `\n[[event_env]]\nevent = "${e.id}"    # ${msp.s.name}\ntag_words = { set = { ${mcode} = "${mcode}" } }\n${SPIRIT_SND.has(e.from) ? `snd_tag_words = { set = { ${mcode} = "${mM}" } }\n` : ''}`;
         fx += `\n[[event_command]]\nevent = "${e.id}"\ncommand = "CMD_799A1EBA"                 # LOAD_ACTOR_RESOURCE\nargs = ["${t.obj}"]\nset = ["${t.obj}", "common/effect/event/${pre}/${stem}/${stem}.objbin"]\n`;
         for (const x of extra) for (const a of [x.o, ...(/^ev\d{8}$/.test(x.o) ? [1, 2, 3, 4, 5, 6].map(k => `${x.o}_${k}`) : [])])
           fx += `\n[[event_command]]\nevent = "${e.id}"\ncommand = "CMD_799A1EBA"\nargs = ["${a}"]\nset = ["${a}", "common/effect/event/${pre}/${x.copy}/${x.copy}.objbin"]\n`;
@@ -728,37 +757,60 @@ $('#write').onclick = async () => {
       // recoloured into a copy, and a [[shot_aura]] rule that gives it to this move only (by its key)
       const trl = t.trail || {};
       if (t.key && base.cat === 'shoot' && trl.on !== false) {
-        const letter = TRAIL_LETTER[t.element || base.el] || 'e', like = `ega0075${letter}`;
+        const letter = TRAIL_LETTER[moveEl(t)] || 'e', like = `ega0075${letter}`;
         const copy = `egz${String(state.block * 250 + t.n % 250).padStart(4, '0')}${letter}`;   // the same length (8)
         fx += `\n# ${t.name}: its shot trail (the game's ${like}), recoloured\n[[recolor]]\nobject = "${like}"\ncopy = "${copy}"\ntextures = "all"\nmaterials = "all"\nvertex_colors = "all"\nparticles = true\n${colourOf(trl.own && trl.color ? trl.color : t.color)}`;
         fx += `\n[[effect]]\nname = "${name}_trail"\nfrom = "${like}"\nobject = "${copy}"\n`;
         fx += `\n[[shot_aura]]\nname = "${name}_trail"\nwhen = { techniques = ["${t.key}"] }\naura = "${name}_trail"\nlike = "${like}"\n`;
       }
-      tech += `\n[[technique]]\nname = "${name}"\n${t.key ? `key = "${t.key}"\n` : ''}base = "${t.k}"\nmanual = true\nevent = "${MOD}.${evs[0].name}"\n${t.fail ? `fail_event = "${MOD}.${evs[1].name}"\n` : ''}${t.element ? `element = "${t.element}"\n` : ''}${strengthToml(t)}description_text = "base"\n` + LANGS.map(l => `  [technique.text.${l}]\n  name = ${tstr(t.name)}\n`).join('');
-      shop += `\n  [[edit.entry]]\n  technique = "${MOD}.${name}"    # ${t.name}\n  price = ${t.price}\n  currency = "tk_bb000001"\n`;
+      tech += `\n[[technique]]\nname = "${name}"\n${t.key ? `key = "${t.key}"\n` : ''}base = "${t.k}"\nmanual = true\nevent = "${MOD}.${evs[0].name}"\n${t.fail ? `fail_event = "${MOD}.${evs[1].name}"\n` : ''}${moveEl(t) !== base.el ? `element = "${moveEl(t)}"\n` : ''}${strengthToml(t)}description_text = "base"\n` + LANGS.map(l => `  [technique.text.${l}]\n  name = ${tstr(t.name)}\n`).join('');
+      if (!msp) shop += `\n  [[edit.entry]]\n  technique = "${MOD}.${name}"    # ${t.name}\n  price = ${t.price}\n  currency = "tk_bb000001"\n`;
     }
-    const files = { 'content/anims/technique_colours.toml': anims, 'content/effects/technique_colours.toml': fx, 'content/techniques/technique_colours.toml': tech, 'addons/InazumaFantasy/content/shops/technique_colours.toml': shop, 'content/characters/technique_colours_models.toml': nChars ? chars : '', 'addons/InazumaStrikers/content/effects/technique_colours_shots.toml': '', 'addons/InazumaStrikers/content/techniques/technique_colours_shots.toml': '' };
+    tech += moveEnv;
+    const files = { 'content/anims/technique_colours.toml': anims, 'content/effects/technique_colours.toml': fx, 'content/techniques/technique_colours.toml': tech, 'addons/InazumaFantasy/content/shops/technique_colours.toml': state.techs.some(t => !t.spirit) ? shop : '', 'content/characters/technique_colours_models.toml': nChars ? chars : '', 'addons/InazumaStrikers/content/effects/technique_colours_shots.toml': '', 'addons/InazumaStrikers/content/techniques/technique_colours_shots.toml': '' };
     // the name banners: one picture per move (in every language), for the moves that have a key
     const withKey = state.techs.filter(t => t.key);
-    files['content/telops/any/telops.toml'] = withKey.length ? `schema = "VRFW.telop_list/2"\n` + withKey.map(t => `\n[[telop]]\nid = "${t.key}"    # ${t.name}\nfrom = "${t.k}"\n`).join('') : '';
+    // (VRFW takes the telop's format from the `from` move's own: a few moves have none in the game, as Meteor Blade A, whose
+    // cut-in then showed a white box: their format comes from a move of the same kind that has one, as Inazuma Fantasy does)
+    const telopFrom = k => TELOP_NONE.has(k) ? TELOP_LIKE[k.slice(0, 3)] || 'whs10160' : k;
+    files['content/telops/any/telops.toml'] = withKey.length ? `schema = "VRFW.telop_list/2"\n` + withKey.map(t => `\n[[telop]]\nid = "${t.key}"    # ${t.name}\nfrom = "${telopFrom(t.k)}"\n`).join('') : '';
+    // the keshins and totems: their files are made from the user's folder of the game's files
+    let sp = null;
+    if (state.spirits.length) {
+      // without the folder of their files, the keshins and totems written before stay as they are
+      if (packIndex) sp = await spiritBuild((i, n) => status(T('Making the copies of the keshins and totems ({i}/{n})…', { i, n })));
+    }
+    const keepSpirits = state.spirits.length && !sp;
+    const spFiles = sp ? sp.files : keepSpirits ? {} : Object.fromEntries(SPIRIT_FILES.map(f => [f, '']));
     // every file is checked before anything is written: one wrong line and VRFW refuses the whole file
-    const bad = tomlError({ ...head, ...files });
+    const bad = tomlError({ ...head, ...files, ...spFiles });
     if (bad) { console.error(bad); status(T('Nothing was written: {file} came out wrong ({err}). Please tell the app\'s author.', bad), 'err'); return; }
     for (const [p, text] of Object.entries(head)) await writeAt(`${MOD}/${p}`, text);
     if (customFont) await writeAt(`${MOD}/${CUSTOM_FONT}`, customFont.data);
     const noFont = withKey.filter(t => t.font === 'custom' && !customFont);
-    for (const t of withKey) await writeAt(`${MOD}/content/telops/any/${t.key}.png`, await telopBlob(t.name, t.element || (baseOf(t.k) || {}).el, t.font));
+    for (const t of withKey) await writeAt(`${MOD}/content/telops/any/${t.key}.png`, await telopBlob(t.name, moveEl(t), t.font));
     try { const d = await dirAt([MOD, 'content', 'telops', 'any']), keep = new Set(withKey.map(t => t.key + '.png')), old = []; for await (const [n] of d.entries()) if (n.endsWith('.png') && !keep.has(n)) old.push(n); for (const n of old) await d.removeEntry(n); } catch (e) { /* none */ }
     for (const [p, text] of Object.entries(files)) {
       if (text && state.techs.length) await writeAt(`${MOD}/${p}`, text);
       else { try { const parts = p.split('/'); await (await dirAt([MOD, ...parts.slice(0, -1)])).removeEntry(parts.at(-1)); } catch (e) { /* not there */ } }
     }
-    status(T('Mod generated in mods\\{mod} with {n} move(s). Switch «{name}» on in the launcher; they are sold in Inazuma Fantasy\'s Technique Shop.', { mod: MOD, n: state.techs.length, name: modName() }), 'ok');
+    for (const [p, text] of Object.entries(spFiles)) {
+      if (text) await writeAt(`${MOD}/${p}`, text);
+      else { try { const parts = p.split('/'); await (await dirAt([MOD, ...parts.slice(0, -1)])).removeEntry(parts.at(-1)); } catch (e) { /* not there */ } }
+    }
+    if (sp) for (const [p, bytes] of Object.entries(sp.bins)) await writeBin(`${MOD}/${p}`, bytes);
+    if (!keepSpirits) await spiritCleanup(sp ? sp.codes : new Set(), sp ? sp.telops : new Set());
+    if (keepSpirits) status(T('Moves written. The keshins and totems were left as they were: to write them, connect the folder of their files first (on the left).'), 'err');
+    else if (state.spirits.length) status(T('Mod generated in mods\\{mod}: {n} move(s), {s} keshin(s)/totem(s). Switch «{name}» on in the launcher; the keshins and totems are sold in Inazuma Fantasy\'s Training Shop.', { mod: MOD, n: state.techs.length, s: state.spirits.length, name: modName() }), 'ok');
+    else status(T('Mod generated in mods\\{mod} with {n} move(s). Switch «{name}» on in the launcher; they are sold in Inazuma Fantasy\'s Technique Shop.', { mod: MOD, n: state.techs.length, name: modName() }), 'ok');
     if (noFont.length) status(T('Mod generated, but your own font file is missing: {names} got the default font. Choose the file again in one of them and generate the mod.', { names: noFont.map(t => '«' + t.name + '»').join(', ') }), 'err');
   } catch (e) { console.error(e); status(T('Could not write: ') + e.message, 'err'); }
 };
 $('#search').addEventListener('input', renderList); $('#cat').addEventListener('change', renderList);
+const setMode = m => { MODE = m; $('#tabmoves').classList.toggle('on', m === 'moves'); $('#tabspirits').classList.toggle('on', m === 'spirits'); $('#search').value = ''; applyLang(); };
+$('#tabmoves').onclick = () => setMode('moves'); $('#tabspirits').onclick = () => setMode('spirits');
 applyLang();
 </script>
+<!--SPIRITS-->
 </body>
 </html>
